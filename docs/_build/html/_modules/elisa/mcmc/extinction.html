@@ -1,0 +1,330 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elisa.mcmc.extinction &mdash; ELISA 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ELISA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ELISA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">elisa.mcmc.extinction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for elisa.mcmc.extinction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Step 3: Extinction Law for Gaia Photometry</span>
+
+<span class="sd">Converts A_V (visual extinction) to extinction in Gaia bands (A_G, A_BP, A_RP).</span>
+
+<span class="sd">References:</span>
+<span class="sd">- Cardelli, Clayton &amp; Mathis (1989) - CCM extinction law</span>
+<span class="sd">- Casagrande &amp; VandenBerg (2018) - Gaia DR2 extinction coefficients</span>
+<span class="sd">- Gaia Collaboration (2018) - Recommended coefficients</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+
+<div class="viewcode-block" id="Extinction">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.extinction.Extinction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Extinction</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extinction law for Gaia G, BP, RP bands.</span>
+<span class="sd">    </span>
+<span class="sd">    Provides conversion from A_V to Gaia extinctions.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R_V : float, optional</span>
+<span class="sd">        Total-to-selective extinction ratio. Default: 3.1</span>
+<span class="sd">    coefficients : str, optional</span>
+<span class="sd">        Which coefficient set to use: &#39;fixed&#39; or &#39;color_dependent&#39;</span>
+<span class="sd">        Default: &#39;fixed&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coefficients</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fixed&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="n">coefficients</span>
+        
+        <span class="c1"># Fixed coefficients (average values, good approximation)</span>
+        <span class="c1"># From Casagrande &amp; VandenBerg (2018) and Gaia DR2 documentation</span>
+        <span class="c1"># A_X / A_V ratios</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_G</span> <span class="o">=</span> <span class="mf">0.83627</span>   <span class="c1"># A_G / A_V</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_BP</span> <span class="o">=</span> <span class="mf">1.08337</span>  <span class="c1"># A_BP / A_V</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_RP</span> <span class="o">=</span> <span class="mf">0.63439</span>  <span class="c1"># A_RP / A_V</span>
+        
+        <span class="c1"># For E(BP-RP) / E(B-V)</span>
+        <span class="c1"># E(BP-RP) = A_BP - A_RP = (k_BP - k_RP) * A_V</span>
+        <span class="c1"># E(B-V) = A_V / R_V</span>
+        <span class="c1"># So E(BP-RP) / A_V = k_BP - k_RP = 0.44898</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_E_BP_RP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_BP</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_RP</span>  <span class="c1"># ~0.449</span>
+    
+
+<div class="viewcode-block" id="Extinction.get_extinction">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.extinction.Extinction.get_extinction">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_extinction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">A_V</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">bp_rp_0</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert A_V to Gaia band extinctions.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        A_V : float</span>
+<span class="sd">            Visual extinction in magnitudes</span>
+<span class="sd">        bp_rp_0 : float or array, optional</span>
+<span class="sd">            Intrinsic BP-RP color (for color-dependent coefficients).</span>
+<span class="sd">            If None, uses fixed coefficients.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        A_G, A_BP, A_RP : floats or arrays</span>
+<span class="sd">            Extinction in each Gaia band</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">==</span> <span class="s1">&#39;fixed&#39;</span> <span class="ow">or</span> <span class="n">bp_rp_0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">A_G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_G</span> <span class="o">*</span> <span class="n">A_V</span>
+            <span class="n">A_BP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_BP</span> <span class="o">*</span> <span class="n">A_V</span>
+            <span class="n">A_RP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_RP</span> <span class="o">*</span> <span class="n">A_V</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Color-dependent coefficients</span>
+            <span class="c1"># Polynomial fits from Gaia DR2 documentation</span>
+            <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_color_dependent_extinction</span><span class="p">(</span><span class="n">A_V</span><span class="p">,</span> <span class="n">bp_rp_0</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span></div>
+
+    
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_color_dependent_extinction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">A_V</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
+        <span class="n">bp_rp_0</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute color-dependent extinction coefficients.</span>
+<span class="sd">        </span>
+<span class="sd">        Based on polynomial fits from Gaia Collaboration.</span>
+<span class="sd">        Valid for -0.5 &lt; BP-RP &lt; 2.75</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ensure within valid range</span>
+        <span class="n">bp_rp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">bp_rp_0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.75</span><span class="p">)</span>
+        
+        <span class="c1"># Polynomial coefficients for k_X = A_X / A_V</span>
+        <span class="c1"># From Babusiaux et al. (2018) / Gaia DR2</span>
+        
+        <span class="c1"># k_G coefficients</span>
+        <span class="n">c_G</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.9761</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1704</span><span class="p">,</span> <span class="mf">0.0086</span><span class="p">,</span> <span class="mf">0.0011</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0438</span><span class="p">,</span> <span class="mf">0.0013</span><span class="p">,</span> <span class="mf">0.0099</span><span class="p">]</span>
+        <span class="n">k_G</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_G</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">c_G</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span> <span class="o">+</span> <span class="n">c_G</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">c_G</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span>
+               <span class="n">c_G</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">A_V</span> <span class="o">+</span> <span class="n">c_G</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">*</span><span class="n">A_V</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">c_G</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">*</span><span class="n">A_V</span><span class="p">)</span>
+        
+        <span class="c1"># k_BP coefficients  </span>
+        <span class="n">c_BP</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1517</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0871</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0333</span><span class="p">,</span> <span class="mf">0.0173</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0230</span><span class="p">,</span> <span class="mf">0.0006</span><span class="p">,</span> <span class="mf">0.0043</span><span class="p">]</span>
+        <span class="n">k_BP</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_BP</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">c_BP</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span> <span class="o">+</span> <span class="n">c_BP</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">c_BP</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span>
+                <span class="n">c_BP</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">A_V</span> <span class="o">+</span> <span class="n">c_BP</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">*</span><span class="n">A_V</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">c_BP</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">*</span><span class="n">A_V</span><span class="p">)</span>
+        
+        <span class="c1"># k_RP coefficients</span>
+        <span class="n">c_RP</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.6104</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0170</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0026</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0017</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0078</span><span class="p">,</span> <span class="mf">0.00005</span><span class="p">,</span> <span class="mf">0.0006</span><span class="p">]</span>
+        <span class="n">k_RP</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_RP</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">c_RP</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span> <span class="o">+</span> <span class="n">c_RP</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">c_RP</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span>
+                <span class="n">c_RP</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">A_V</span> <span class="o">+</span> <span class="n">c_RP</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">*</span><span class="n">A_V</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">c_RP</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">*</span><span class="n">bp_rp</span><span class="o">*</span><span class="n">A_V</span><span class="p">)</span>
+        
+        <span class="n">A_G</span> <span class="o">=</span> <span class="n">k_G</span> <span class="o">*</span> <span class="n">A_V</span>
+        <span class="n">A_BP</span> <span class="o">=</span> <span class="n">k_BP</span> <span class="o">*</span> <span class="n">A_V</span>
+        <span class="n">A_RP</span> <span class="o">=</span> <span class="n">k_RP</span> <span class="o">*</span> <span class="n">A_V</span>
+        
+        <span class="k">return</span> <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span>
+    
+
+<div class="viewcode-block" id="Extinction.get_reddening">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.extinction.Extinction.get_reddening">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_reddening</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A_V</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get color excess E(BP-RP) from A_V.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        A_V : float</span>
+<span class="sd">            Visual extinction</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        E_BP_RP : float</span>
+<span class="sd">            Color excess E(BP-RP) = A_BP - A_RP</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extinction</span><span class="p">(</span><span class="n">A_V</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">A_BP</span> <span class="o">-</span> <span class="n">A_RP</span></div>
+
+    
+
+<div class="viewcode-block" id="Extinction.A_V_from_E_BP_RP">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.extinction.Extinction.A_V_from_E_BP_RP">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">A_V_from_E_BP_RP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">E_BP_RP</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert E(BP-RP) to A_V.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        E_BP_RP : float</span>
+<span class="sd">            Color excess E(BP-RP)</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        A_V : float</span>
+<span class="sd">            Visual extinction</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">E_BP_RP</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_E_BP_RP</span></div>
+
+
+
+<div class="viewcode-block" id="Extinction.apply_extinction_and_distance">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.extinction.Extinction.apply_extinction_and_distance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_extinction_and_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+        <span class="n">abs_mags</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">distance_modulus</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">A_V</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">bp_rp_0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert absolute magnitudes to apparent magnitudes.</span>
+<span class="sd">        </span>
+<span class="sd">        Applies distance modulus and extinction.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        abs_mags : np.ndarray</span>
+<span class="sd">            Absolute magnitudes, shape (n_stars, 3) for [G, BP, RP]</span>
+<span class="sd">        distance_modulus : float</span>
+<span class="sd">            Distance modulus (m - M) in magnitudes</span>
+<span class="sd">        A_V : float</span>
+<span class="sd">            Visual extinction in magnitudes</span>
+<span class="sd">        bp_rp_0 : np.ndarray, optional</span>
+<span class="sd">            Intrinsic colors for color-dependent extinction</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        app_mags : np.ndarray</span>
+<span class="sd">            Apparent magnitudes, shape (n_stars, 3)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># Compute intrinsic color if not provided</span>
+        <span class="k">if</span> <span class="n">bp_rp_0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bp_rp_0</span> <span class="o">=</span> <span class="n">abs_mags</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">abs_mags</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># BP - RP</span>
+        
+        <span class="c1"># Get extinction in each band</span>
+        <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extinction</span><span class="p">(</span><span class="n">A_V</span><span class="p">,</span> <span class="n">bp_rp_0</span><span class="p">)</span>
+        
+        <span class="c1"># Apply to magnitudes</span>
+        <span class="n">app_mags</span> <span class="o">=</span> <span class="n">abs_mags</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">app_mags</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">distance_modulus</span> <span class="o">+</span> <span class="n">A_G</span>   <span class="c1"># G</span>
+        <span class="n">app_mags</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">distance_modulus</span> <span class="o">+</span> <span class="n">A_BP</span>  <span class="c1"># BP</span>
+        <span class="n">app_mags</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">distance_modulus</span> <span class="o">+</span> <span class="n">A_RP</span>  <span class="c1"># RP</span>
+        
+        <span class="k">return</span> <span class="n">app_mags</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="distance_modulus_to_distance">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.extinction.distance_modulus_to_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">distance_modulus_to_distance</span><span class="p">(</span><span class="n">dm</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert distance modulus to distance in parsecs.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">dm</span> <span class="o">/</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="distance_to_distance_modulus">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.extinction.distance_to_distance_modulus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">distance_to_distance_modulus</span><span class="p">(</span><span class="n">d_pc</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert distance in parsecs to distance modulus.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">d_pc</span><span class="p">)</span> <span class="o">-</span> <span class="mi">5</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Jeison Steven Alfonso.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

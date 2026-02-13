@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elisa.mcmc.utils &mdash; ELISA 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ELISA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ELISA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">elisa.mcmc.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for elisa.mcmc.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Likelihood Function</span>
+<span class="c1"># =============================================================================</span>
+
+<div class="viewcode-block" id="log_likelihood">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.utils.log_likelihood">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_likelihood</span><span class="p">(</span>
+    <span class="n">observed_mags</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">observed_errors</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">predicted_mags</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">error_floor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
+    <span class="n">intrinsic_scatter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute log-likelihood comparing observed and predicted magnitudes.</span>
+
+<span class="sd">    Implements Equation 2 from von Hippel et al. (2006), with added</span>
+<span class="sd">    error floor and intrinsic scatter to handle model imperfections.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    observed_mags : np.ndarray</span>
+<span class="sd">        Observed magnitudes, shape (n_stars, n_bands)</span>
+<span class="sd">    observed_errors : np.ndarray</span>
+<span class="sd">        Photometric errors, shape (n_stars, n_bands)</span>
+<span class="sd">    predicted_mags : np.ndarray</span>
+<span class="sd">        Predicted magnitudes from model, shape (n_stars, n_bands)</span>
+<span class="sd">    error_floor : float</span>
+<span class="sd">        Minimum error to prevent overly tight constraints (default: 0.02 mag)</span>
+<span class="sd">    intrinsic_scatter : float</span>
+<span class="sd">        Additional scatter added in quadrature to account for model</span>
+<span class="sd">        imperfections, binaries, rotation, etc. (default: 0.05 mag)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Log-likelihood value. Returns -inf if any prediction is NaN.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">predicted_mags</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+    <span class="c1"># Apply error floor and add intrinsic scatter in quadrature</span>
+    <span class="c1"># This accounts for: model imperfections, unresolved binaries, stellar rotation, activity, etc.</span>
+    <span class="n">total_errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">observed_errors</span><span class="p">,</span> <span class="n">error_floor</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">intrinsic_scatter</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Gaussian log-likelihood</span>
+    <span class="c1"># log(L) = -0.5 * sum[ log(2*pi*sigma^2) + (x - mu)^2 / sigma^2 ]</span>
+
+    <span class="n">variance</span> <span class="o">=</span> <span class="n">total_errors</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">residuals</span> <span class="o">=</span> <span class="n">observed_mags</span> <span class="o">-</span> <span class="n">predicted_mags</span>
+
+    <span class="n">log_like</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">variance</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">residuals</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">variance</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">log_like</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Prior Functions</span>
+<span class="c1"># =============================================================================</span>
+
+<div class="viewcode-block" id="log_prior_imf_chabrier">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.utils.log_prior_imf_chabrier">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_prior_imf_chabrier</span><span class="p">(</span><span class="n">mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Chabrier (2003) IMF log-prior for stellar mass.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mass : float</span>
+<span class="sd">        Stellar mass in solar masses</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Log-prior probability</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">mass</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    
+    <span class="k">if</span> <span class="n">mass</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="c1"># Log-normal for M &lt;= 1 Msun</span>
+        <span class="n">m_c</span> <span class="o">=</span> <span class="mf">0.079</span>  <span class="c1"># characteristic mass</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="mf">0.69</span>
+        <span class="n">log_prior</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">mass</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">m_c</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Power law for M &gt; 1 Msun</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mf">2.3</span>  <span class="c1"># Salpeter-like slope</span>
+        <span class="n">log_prior</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">mass</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">log_prior</span></div>
+
+
+
+<div class="viewcode-block" id="log_prior_imf_chabrier_vectorized">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.utils.log_prior_imf_chabrier_vectorized">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_prior_imf_chabrier_vectorized</span><span class="p">(</span><span class="n">masses</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vectorized Chabrier IMF log-prior for array of masses.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    masses : np.ndarray</span>
+<span class="sd">        Array of stellar masses</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Sum of log-prior probabilities</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">masses</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    
+    <span class="n">log_priors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">masses</span><span class="p">)</span>
+    
+    <span class="c1"># Low mass: log-normal</span>
+    <span class="n">low_mass</span> <span class="o">=</span> <span class="n">masses</span> <span class="o">&lt;=</span> <span class="mf">1.0</span>
+    <span class="n">m_c</span> <span class="o">=</span> <span class="mf">0.079</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="mf">0.69</span>
+    <span class="n">log_priors</span><span class="p">[</span><span class="n">low_mass</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">masses</span><span class="p">[</span><span class="n">low_mass</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">m_c</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># High mass: power law</span>
+    <span class="n">high_mass</span> <span class="o">=</span> <span class="n">masses</span> <span class="o">&gt;</span> <span class="mf">1.0</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="mf">2.3</span>
+    <span class="n">log_priors</span><span class="p">[</span><span class="n">high_mass</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">masses</span><span class="p">[</span><span class="n">high_mass</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_priors</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_prior_gaussian">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.utils.log_prior_gaussian">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_prior_gaussian</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">std</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gaussian log-prior.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    value : float</span>
+<span class="sd">        Parameter value</span>
+<span class="sd">    mean : float</span>
+<span class="sd">        Prior mean</span>
+<span class="sd">    std : float</span>
+<span class="sd">        Prior standard deviation</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Log-prior probability</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="log_prior_uniform">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.utils.log_prior_uniform">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_prior_uniform</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">low</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">high</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uniform log-prior.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    value : float</span>
+<span class="sd">        Parameter value</span>
+<span class="sd">    low : float</span>
+<span class="sd">        Lower bound</span>
+<span class="sd">    high : float</span>
+<span class="sd">        Upper bound</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Log-prior probability (0 if in bounds, -inf otherwise)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Jeison Steven Alfonso.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

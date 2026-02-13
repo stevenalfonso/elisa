@@ -1,0 +1,459 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elisa.mcmc.posterior &mdash; ELISA 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ELISA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ELISA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">elisa.mcmc.posterior</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for elisa.mcmc.posterior</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Likelihood Function for Cluster Parameter Inference</span>
+
+<span class="sd">Implements the Bayesian likelihood from von Hippel et al. (2006), Equation 2.</span>
+
+<span class="sd">The likelihood compares observed photometry with model predictions:</span>
+<span class="sd">    L = product over all stars and bands of:</span>
+<span class="sd">        (1 / sqrt(2*pi*sigma^2)) * exp(-(x_obs - x_pred)^2 / (2*sigma^2))</span>
+
+<span class="sd">In log form:</span>
+<span class="sd">    log(L) = sum of:</span>
+<span class="sd">        -0.5 * log(2*pi*sigma^2) - (x_obs - x_pred)^2 / (2*sigma^2)</span>
+
+<span class="sd">Note: This module expects apparent magnitudes as input. Users should apply</span>
+<span class="sd">their preferred extinction correction before passing data to this module.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_prior_gaussian</span><span class="p">,</span> <span class="n">log_prior_uniform</span><span class="p">,</span> <span class="n">log_likelihood</span>
+
+
+<div class="viewcode-block" id="Posterior">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.posterior.Posterior">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Posterior</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Log-posterior function for cluster parameter inference.</span>
+
+<span class="sd">    Combines likelihood and priors for use with MCMC samplers.</span>
+<span class="sd">    Samples only the 4 cluster parameters: logAge, MH, dm, AV.</span>
+<span class="sd">    Stellar masses are estimated internally for each star based on</span>
+<span class="sd">    the observed G magnitude and current cluster parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    observed_mags : np.ndarray</span>
+<span class="sd">        Observed magnitudes, shape (n_stars, 3) for [G, BP, RP]</span>
+<span class="sd">    observed_errors : np.ndarray</span>
+<span class="sd">        Photometric errors, shape (n_stars, 3)</span>
+<span class="sd">    interpolator : IsochroneInterpolator</span>
+<span class="sd">        Isochrone interpolator object</span>
+<span class="sd">    extinction_law : GaiaExtinction</span>
+<span class="sd">        Extinction law object</span>
+<span class="sd">    prior_logAge : tuple</span>
+<span class="sd">        (mean, std) for Gaussian prior on log(age), or (low, high) for uniform</span>
+<span class="sd">    prior_MH : tuple</span>
+<span class="sd">        (mean, std) for Gaussian prior on [M/H]</span>
+<span class="sd">    prior_dm : tuple</span>
+<span class="sd">        (mean, std) for Gaussian prior on distance modulus</span>
+<span class="sd">    prior_AV : tuple</span>
+<span class="sd">        (mean, std) for Gaussian prior on A_V (truncated at 0)</span>
+<span class="sd">    prior_type : str or dict</span>
+<span class="sd">        Prior type for cluster parameters. Can be a single string</span>
+<span class="sd">        (&#39;gaussian&#39; or &#39;uniform&#39;) applied to all parameters, or a dict</span>
+<span class="sd">        with keys &#39;logAge&#39;, &#39;MH&#39;, &#39;dm&#39;, &#39;AV&#39; mapping to &#39;gaussian&#39; or</span>
+<span class="sd">        &#39;uniform&#39; for per-parameter control. Example:</span>
+<span class="sd">        {&#39;logAge&#39;: &#39;uniform&#39;, &#39;MH&#39;: &#39;gaussian&#39;, &#39;dm&#39;: &#39;gaussian&#39;, &#39;AV&#39;: &#39;gaussian&#39;}</span>
+<span class="sd">    error_floor : float</span>
+<span class="sd">        Minimum photometric error (default: 0.02 mag). Prevents unrealistically</span>
+<span class="sd">        tight constraints from very small reported errors.</span>
+<span class="sd">    intrinsic_scatter : float</span>
+<span class="sd">        Additional scatter added in quadrature (default: 0.05 mag). Accounts for</span>
+<span class="sd">        model imperfections, unresolved binaries, stellar rotation, activity, etc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">observed_mags</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">observed_errors</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">interpolator</span><span class="p">,</span>
+        <span class="n">extinction_law</span><span class="p">,</span>
+        <span class="n">prior_logAge</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="n">prior_MH</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+        <span class="n">prior_dm</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+        <span class="n">prior_AV</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+        <span class="n">prior_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
+        <span class="n">error_floor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
+        <span class="n">intrinsic_scatter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">correct_extinction</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observed_mags</span> <span class="o">=</span> <span class="n">observed_mags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observed_errors</span> <span class="o">=</span> <span class="n">observed_errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_stars</span> <span class="o">=</span> <span class="n">observed_mags</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">interpolator</span> <span class="o">=</span> <span class="n">interpolator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extinction_law</span> <span class="o">=</span> <span class="n">extinction_law</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_logAge</span> <span class="o">=</span> <span class="n">prior_logAge</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_MH</span> <span class="o">=</span> <span class="n">prior_MH</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_dm</span> <span class="o">=</span> <span class="n">prior_dm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_AV</span> <span class="o">=</span> <span class="n">prior_AV</span>
+        <span class="c1"># Normalize prior_type to a per-parameter dict</span>
+        <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;logAge&#39;</span><span class="p">,</span> <span class="s1">&#39;MH&#39;</span><span class="p">,</span> <span class="s1">&#39;dm&#39;</span><span class="p">,</span> <span class="s1">&#39;AV&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prior_type</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prior_type</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">prior_type</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prior_type</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">prior_type</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">correct_extinction</span> <span class="o">=</span> <span class="n">correct_extinction</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_floor</span> <span class="o">=</span> <span class="n">error_floor</span>  <span class="c1"># minimum photometric error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic_scatter</span> <span class="o">=</span> <span class="n">intrinsic_scatter</span>  <span class="c1"># model scatter (binaries, rotation, etc.)</span>
+
+        <span class="c1"># Bounds for parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;logAge&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">interpolator</span><span class="o">.</span><span class="n">age_min</span><span class="p">,</span> <span class="n">interpolator</span><span class="o">.</span><span class="n">age_max</span><span class="p">),</span>
+            <span class="s1">&#39;MH&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">interpolator</span><span class="o">.</span><span class="n">MH_min</span><span class="p">,</span> <span class="n">interpolator</span><span class="o">.</span><span class="n">MH_max</span><span class="p">),</span>
+            <span class="s1">&#39;dm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">25.0</span><span class="p">),</span>  <span class="c1"># distance modulus</span>
+            <span class="s1">&#39;AV&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>   <span class="c1"># extinction</span>
+            <span class="s1">&#39;mass&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">interpolator</span><span class="o">.</span><span class="n">mass_min</span><span class="p">,</span> <span class="n">interpolator</span><span class="o">.</span><span class="n">mass_max</span><span class="p">)</span>
+        <span class="p">}</span>
+
+
+<div class="viewcode-block" id="Posterior.log_prior">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.posterior.Posterior.log_prior">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute log-prior for cluster parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        params : np.ndarray</span>
+<span class="sd">            Cluster parameter vector: [logAge, MH, dm, AV]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Log-prior probability</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logAge</span><span class="p">,</span> <span class="n">MH</span><span class="p">,</span> <span class="n">dm</span><span class="p">,</span> <span class="n">AV</span> <span class="o">=</span> <span class="n">params</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;logAge&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">logAge</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;logAge&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;MH&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">MH</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;MH&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;dm&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">dm</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;dm&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;AV&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">AV</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;AV&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="n">log_p</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Priors on cluster parameters (per-parameter prior type)</span>
+        <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">prior_params</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">logAge</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_logAge</span><span class="p">,</span> <span class="s1">&#39;logAge&#39;</span><span class="p">),</span> 
+                                          <span class="p">(</span><span class="n">MH</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_MH</span><span class="p">,</span> <span class="s1">&#39;MH&#39;</span><span class="p">),</span> 
+                                          <span class="p">(</span><span class="n">dm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_dm</span><span class="p">,</span> <span class="s1">&#39;dm&#39;</span><span class="p">),</span> 
+                                          <span class="p">(</span><span class="n">AV</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_AV</span><span class="p">,</span> <span class="s1">&#39;AV&#39;</span><span class="p">),]:</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_type</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+                <span class="n">log_p</span> <span class="o">+=</span> <span class="n">log_prior_gaussian</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">prior_params</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># uniform</span>
+                <span class="n">log_p</span> <span class="o">+=</span> <span class="n">log_prior_uniform</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">prior_params</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">log_p</span></div>
+
+
+
+<div class="viewcode-block" id="Posterior.estimate_masses">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.posterior.Posterior.estimate_masses">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_masses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logAge</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">MH</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">AV</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Estimate stellar masses from observed magnitudes given cluster parameters.</span>
+
+<span class="sd">        For each star, finds the mass that minimizes the chi-squared across</span>
+<span class="sd">        all photometric bands (G, BP, RP), not just G magnitude.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        logAge : float</span>
+<span class="sd">            Log10 of age in years</span>
+<span class="sd">        MH : float</span>
+<span class="sd">            Metallicity [M/H]</span>
+<span class="sd">        dm : float</span>
+<span class="sd">            Distance modulus</span>
+<span class="sd">        AV : float</span>
+<span class="sd">            V-band extinction</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Estimated masses for each star</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build a grid of masses and compute apparent magnitudes for each</span>
+        <span class="n">mass_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="mi">300</span><span class="p">)</span>
+
+        <span class="c1"># Get absolute magnitudes for the mass grid</span>
+        <span class="n">abs_mags_grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolator</span><span class="o">.</span><span class="n">get_magnitudes_vectorized</span><span class="p">(</span><span class="n">mass_grid</span><span class="p">,</span> <span class="n">logAge</span><span class="p">,</span> <span class="n">MH</span><span class="p">)</span>
+
+        <span class="c1"># Apply extinction and distance to get apparent magnitudes</span>
+        <span class="n">bp_rp_0</span> <span class="o">=</span> <span class="n">abs_mags_grid</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">abs_mags_grid</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">correct_extinction</span><span class="p">:</span>
+            <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extinction_law</span><span class="o">.</span><span class="n">get_extinction</span><span class="p">(</span><span class="n">AV</span><span class="p">,</span> <span class="n">bp_rp_0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+
+        <span class="n">app_mags_grid</span> <span class="o">=</span> <span class="n">abs_mags_grid</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">app_mags_grid</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dm</span> <span class="o">+</span> <span class="n">A_G</span>
+        <span class="n">app_mags_grid</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dm</span> <span class="o">+</span> <span class="n">A_BP</span>
+        <span class="n">app_mags_grid</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dm</span> <span class="o">+</span> <span class="n">A_RP</span>
+
+        <span class="c1"># Find valid grid points (no NaN)</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">app_mags_grid</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">mass_grid_valid</span> <span class="o">=</span> <span class="n">mass_grid</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
+        <span class="n">app_mags_valid</span> <span class="o">=</span> <span class="n">app_mags_grid</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mass_grid_valid</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># Fallback to simple mass estimate based on G</span>
+            <span class="n">G_obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_mags</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">G_abs_approx</span> <span class="o">=</span> <span class="n">G_obs</span> <span class="o">-</span> <span class="n">dm</span> <span class="o">-</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">AV</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">((</span><span class="mf">4.83</span> <span class="o">-</span> <span class="n">G_abs_approx</span><span class="p">)</span> <span class="o">/</span> <span class="mf">7.5</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.01</span><span class="p">)</span>
+
+        <span class="c1"># For each star, find the mass that minimizes chi-squared across all bands</span>
+        <span class="n">masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stars</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stars</span><span class="p">):</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_mags</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># shape (3,)</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># shape (3,)</span>
+
+            <span class="c1"># Use error floor for mass estimation</span>
+            <span class="n">err_eff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">)</span>
+
+            <span class="c1"># Compute chi-squared for each mass in the grid</span>
+            <span class="n">residuals</span> <span class="o">=</span> <span class="n">app_mags_valid</span> <span class="o">-</span> <span class="n">obs</span>  <span class="c1"># shape (n_valid, 3)</span>
+            <span class="n">chi2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">residuals</span> <span class="o">/</span> <span class="n">err_eff</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># Find mass with minimum chi-squared</span>
+            <span class="n">idx_best</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">chi2</span><span class="p">)</span>
+            <span class="n">masses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">mass_grid_valid</span><span class="p">[</span><span class="n">idx_best</span><span class="p">]</span>
+
+        <span class="c1"># Clip to valid mass range</span>
+        <span class="n">masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+            <span class="n">masses</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.01</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">masses</span></div>
+
+
+<div class="viewcode-block" id="Posterior.log_likelihood">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.posterior.Posterior.log_likelihood">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute log-likelihood for cluster parameters.</span>
+
+<span class="sd">        Masses are estimated internally based on the observed G magnitudes</span>
+<span class="sd">        and the current cluster parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        params : np.ndarray</span>
+<span class="sd">            Cluster parameter vector: [logAge, MH, dm, AV]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Log-likelihood</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logAge</span><span class="p">,</span> <span class="n">MH</span><span class="p">,</span> <span class="n">dm</span><span class="p">,</span> <span class="n">AV</span> <span class="o">=</span> <span class="n">params</span>
+
+        <span class="c1"># Estimate masses given current cluster parameters</span>
+        <span class="n">masses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_masses</span><span class="p">(</span><span class="n">logAge</span><span class="p">,</span> <span class="n">MH</span><span class="p">,</span> <span class="n">dm</span><span class="p">,</span> <span class="n">AV</span><span class="p">)</span>
+
+        <span class="c1"># Get predicted absolute magnitudes from isochrones</span>
+        <span class="n">abs_mags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolator</span><span class="o">.</span><span class="n">get_magnitudes_vectorized</span><span class="p">(</span><span class="n">masses</span><span class="p">,</span> <span class="n">logAge</span><span class="p">,</span> <span class="n">MH</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">abs_mags</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="c1"># Apply extinction and distance</span>
+        <span class="n">bp_rp_0</span> <span class="o">=</span> <span class="n">abs_mags</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">abs_mags</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">correct_extinction</span><span class="p">:</span>
+            <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extinction_law</span><span class="o">.</span><span class="n">get_extinction</span><span class="p">(</span><span class="n">AV</span><span class="p">,</span> <span class="n">bp_rp_0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">A_G</span><span class="p">,</span> <span class="n">A_BP</span><span class="p">,</span> <span class="n">A_RP</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Convert to apparent magnitudes</span>
+        <span class="n">predicted_mags</span> <span class="o">=</span> <span class="n">abs_mags</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">predicted_mags</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dm</span> <span class="o">+</span> <span class="n">A_G</span>
+        <span class="n">predicted_mags</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dm</span> <span class="o">+</span> <span class="n">A_BP</span>
+        <span class="n">predicted_mags</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dm</span> <span class="o">+</span> <span class="n">A_RP</span>
+
+        <span class="k">return</span> <span class="n">log_likelihood</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observed_mags</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observed_errors</span><span class="p">,</span>
+            <span class="n">predicted_mags</span><span class="p">,</span>
+            <span class="n">error_floor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">error_floor</span><span class="p">,</span>
+            <span class="n">intrinsic_scatter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic_scatter</span>
+        <span class="p">)</span></div>
+
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute log-posterior for cluster parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        params : np.ndarray</span>
+<span class="sd">            Cluster parameter vector: [logAge, MH, dm, AV]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Log-posterior probability</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate input</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected 4 parameters [logAge, MH, dm, AV], got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Prior</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prior</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lp</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="c1"># Likelihood</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_likelihood</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ll</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="k">return</span> <span class="n">lp</span> <span class="o">+</span> <span class="n">ll</span>
+
+
+<div class="viewcode-block" id="Posterior.get_initial_params">
+<a class="viewcode-back" href="../../../api.html#elisa.mcmc.posterior.Posterior.get_initial_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_initial_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">logAge_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">MH_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dm_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">AV_init</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate initial cluster parameter vector.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        logAge_init, MH_init, dm_init, AV_init : float, optional</span>
+<span class="sd">            Initial cluster parameters. If None, uses prior mean.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Initial parameter vector of shape (4,): [logAge, MH, dm, AV]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">logAge_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logAge_init</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_logAge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">MH_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">MH_init</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_MH</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">dm_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dm_init</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_dm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">AV_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">AV_init</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_AV</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">logAge_init</span><span class="p">,</span> <span class="n">MH_init</span><span class="p">,</span> <span class="n">dm_init</span><span class="p">,</span> <span class="n">AV_init</span><span class="p">])</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Jeison Steven Alfonso.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

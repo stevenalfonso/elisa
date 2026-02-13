@@ -1,0 +1,656 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elisa.query.data &mdash; ELISA 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ELISA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ELISA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">elisa.query.data</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for elisa.query.data</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astroquery.gaia</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gaia</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astroquery.vizier</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vizier</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="c1">#import warnings</span>
+<span class="c1">#warnings.filterwarnings(&#39;ignore&#39;)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Default columns for Gaia queries</span>
+<span class="n">DEFAULT_COLUMNS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;source_id, ra, ra_error, dec, dec_error, l, b, parallax, parallax_error,</span>
+<span class="s2">                    pmra, pmra_error, pmdec, pmdec_error, </span>
+<span class="s2">                    phot_g_mean_mag, phot_g_mean_flux, phot_g_mean_flux_error, </span>
+<span class="s2">                    phot_rp_mean_mag, phot_rp_mean_flux, phot_rp_mean_flux_error,</span>
+<span class="s2">                    phot_bp_mean_mag, phot_bp_mean_flux, phot_bp_mean_flux_error, </span>
+<span class="s2">                    radial_velocity, radial_velocity_error&quot;&quot;&quot;</span>
+
+
+<span class="n">VIZIER_MIRRORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cds&#39;</span><span class="p">:</span> <span class="s1">&#39;https://vizier.cds.unistra.fr&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;harvard&#39;</span><span class="p">:</span> <span class="s1">&#39;https://vizier.cfa.harvard.edu&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tokyo&#39;</span><span class="p">:</span> <span class="s1">&#39;https://vizier.nao.ac.jp&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;beijing&#39;</span><span class="p">:</span> <span class="s1">&#39;https://vizier.china-vo.org&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="ElisaQuery">
+<a class="viewcode-back" href="../../../api.html#elisa.query.data.ElisaQuery">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ElisaQuery</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">vizier_server</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;harvard&#39;</span><span class="p">):</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize ElisaQuery instance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        verbose : bool, default=True</span>
+<span class="sd">            Whether to print status messages. If False, only logs to logger.</span>
+<span class="sd">        vizier_server : str, default=&#39;harvard&#39;</span>
+<span class="sd">            VizieR mirror to use. Options: &#39;cds&#39; (France), &#39;harvard&#39; (USA),</span>
+<span class="sd">            &#39;tokyo&#39; (Japan), &#39;beijing&#39; (China), or a custom URL.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gaia_login</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df_members</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+        <span class="c1"># Set VizieR server</span>
+        <span class="k">if</span> <span class="n">vizier_server</span> <span class="ow">in</span> <span class="n">VIZIER_MIRRORS</span><span class="p">:</span>
+            <span class="n">Vizier</span><span class="o">.</span><span class="n">VIZIER_SERVER</span> <span class="o">=</span> <span class="n">VIZIER_MIRRORS</span><span class="p">[</span><span class="n">vizier_server</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Vizier</span><span class="o">.</span><span class="n">VIZIER_SERVER</span> <span class="o">=</span> <span class="n">vizier_server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using VizieR server: </span><span class="si">{</span><span class="n">Vizier</span><span class="o">.</span><span class="n">VIZIER_SERVER</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;info&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal logging helper that respects verbose setting.&quot;&quot;&quot;</span>
+        <span class="n">log_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+        <span class="n">log_func</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ElisaQuery.login">
+<a class="viewcode-back" href="../../../api.html#elisa.query.data.ElisaQuery.login">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_to_credentials_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">user_credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log in to Gaia archive.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        path_to_credentials_file : str, optional</span>
+<span class="sd">            Path to credentials file</span>
+<span class="sd">        user_credentials : dict, optional</span>
+<span class="sd">            Dictionary with &#39;username&#39; and &#39;password&#39; keys</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">path_to_credentials_file</span> <span class="ow">and</span> <span class="n">user_credentials</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Provide either &#39;path_to_credentials_file&#39; or &#39;user_credentials&#39;, not both.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">path_to_credentials_file</span><span class="p">:</span>
+            <span class="n">credentials_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path_to_credentials_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">credentials_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Credentials file does not exist: </span><span class="si">{</span><span class="n">credentials_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;Logging into Gaia using credentials file.&quot;</span><span class="p">)</span>
+            <span class="n">Gaia</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">credentials_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">credentials_path</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">user_credentials</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">username</span> <span class="o">=</span> <span class="n">user_credentials</span><span class="p">[</span><span class="s2">&quot;username&quot;</span><span class="p">]</span>
+                <span class="n">password</span> <span class="o">=</span> <span class="n">user_credentials</span><span class="p">[</span><span class="s2">&quot;password&quot;</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;user_credentials must contain &#39;username&#39; and &#39;password&#39;.&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;Logging into Gaia using user credentials dictionary.&quot;</span><span class="p">)</span>
+            <span class="n">Gaia</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No authentication method provided. Specify either a credentials file or a user credentials dictionary.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gaia_login</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;Successfully logged into Gaia archive.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ElisaQuery.logout">
+<a class="viewcode-back" href="../../../api.html#elisa.query.data.ElisaQuery.logout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log out from Gaia archive.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaia_login</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;Not logged in.&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;warning&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">Gaia</span><span class="o">.</span><span class="n">logout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gaia_login</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;Successfully logged out from Gaia archive.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ElisaQuery.load_gaia_tables">
+<a class="viewcode-back" href="../../../api.html#elisa.query.data.ElisaQuery.load_gaia_tables">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_gaia_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_shared</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load and display available Gaia tables.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        include_shared : bool, default=True</span>
+<span class="sd">            Whether to include shared tables (requires login)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of str</span>
+<span class="sd">            List of available table names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">include_shared</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaia_login</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;Warning: include_shared=True but not logged in. &quot;</span>
+                     <span class="s2">&quot;Shared tables will not be included.&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;warning&#39;</span><span class="p">)</span>
+            <span class="n">include_shared</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">tables</span> <span class="o">=</span> <span class="n">Gaia</span><span class="o">.</span><span class="n">load_tables</span><span class="p">(</span><span class="n">only_names</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">include_shared_tables</span><span class="o">=</span><span class="n">include_shared</span><span class="p">)</span>
+
+        <span class="n">table_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">table</span><span class="o">.</span><span class="n">get_qualified_name</span><span class="p">()</span> <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">table_names</span><span class="p">)</span><span class="si">}</span><span class="s2"> available Gaia tables.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">table_names</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">table_names</span></div>
+
+
+
+<div class="viewcode-block" id="ElisaQuery.load_catalog">
+<a class="viewcode-back" href="../../../api.html#elisa.query.data.ElisaQuery.load_catalog">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">catalog_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;alfonso-2024&#39;</span><span class="p">,</span> 
+                    <span class="n">load_members</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load star cluster catalogs from VizieR.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        catalog_name : str</span>
+<span class="sd">            Catalog identifier. Options: &#39;alfonso-2024&#39;, &#39;cantat-gaudin-2020&#39;, </span>
+<span class="sd">            &#39;hunt-2023&#39;, &#39;vasiliev-2021&#39;</span>
+<span class="sd">        load_members : bool, default=False</span>
+<span class="sd">            Whether to load cluster members</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple of pd.DataFrame</span>
+<span class="sd">            (clusters_df, members_df)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">_print_str</span> <span class="o">=</span> <span class="s1">&#39;clusters and members&#39;</span> <span class="k">if</span> <span class="n">load_members</span> <span class="k">else</span> <span class="s1">&#39;clusters&#39;</span>
+
+        <span class="n">catalog_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;cantat-gaudin-2020&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Cantat-Gaudin et al. 2020&#39;</span><span class="p">,</span> <span class="s1">&#39;J/A+A/640/A1/table1&#39;</span><span class="p">,</span> <span class="s1">&#39;J/A+A/640/A1/nodup&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;alfonso-2024&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Alfonso et al. 2024&#39;</span><span class="p">,</span> <span class="s1">&#39;J/A+A/689/A18/clusters&#39;</span><span class="p">,</span> <span class="s1">&#39;J/A+A/689/A18/members&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;hunt-2023&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Hunt et al. 2023&#39;</span><span class="p">,</span> <span class="s1">&#39;J/A+A/673/A114/clusters&#39;</span><span class="p">,</span> <span class="s1">&#39;J/A+A/673/A114/members&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;vasiliev-2021&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Vasiliev et al. 2021&#39;</span><span class="p">,</span> <span class="s1">&#39;J/MNRAS/505/5978/tablea1&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">catalog_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">catalog_info</span><span class="p">:</span>
+            <span class="n">available</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">catalog_info</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Catalog &#39;</span><span class="si">{</span><span class="n">catalog_name</span><span class="si">}</span><span class="s2">&#39; is not recognized. Available: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">author</span><span class="p">,</span> <span class="n">catalog</span><span class="p">,</span> <span class="n">catalog_members</span> <span class="o">=</span> <span class="n">catalog_info</span><span class="p">[</span><span class="n">catalog_name</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading </span><span class="si">{</span><span class="n">_print_str</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">author</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">Vizier</span><span class="p">(</span><span class="n">catalog</span><span class="o">=</span><span class="n">catalog</span><span class="p">,</span> <span class="n">row_limit</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">query_constraints</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load catalog &#39;</span><span class="si">{</span><span class="n">catalog_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="se">\n</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="s1">&#39;cluster&#39;</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;Cluster&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span><span class="o">.</span><span class="n">columns</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span><span class="p">[</span><span class="s1">&#39;cluster&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span><span class="p">[</span><span class="s1">&#39;cluster&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span><span class="p">)</span><span class="si">}</span><span class="s2"> clusters from the </span><span class="si">{</span><span class="n">catalog_name</span><span class="si">}</span><span class="s2"> catalog.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">load_members</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">catalog_members</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Members for &#39;</span><span class="si">{</span><span class="n">catalog_name</span><span class="si">}</span><span class="s2">&#39; are not available, please set load_members=False.&quot;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">query_members</span> <span class="o">=</span> <span class="n">Vizier</span><span class="p">(</span><span class="n">catalog</span><span class="o">=</span><span class="n">catalog_members</span><span class="p">,</span> <span class="n">row_limit</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">query_constraints</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load members from &#39;</span><span class="si">{</span><span class="n">catalog_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="se">\n</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">df_members</span> <span class="o">=</span> <span class="n">query_members</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df_members</span><span class="p">)</span><span class="si">}</span><span class="s2"> members from the </span><span class="si">{</span><span class="n">catalog_name</span><span class="si">}</span><span class="s2"> catalog.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_members</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_cluster</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="ElisaQuery.gaia_query">
+<a class="viewcode-back" href="../../../api.html#elisa.query.data.ElisaQuery.gaia_query">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gaia_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">coordinates</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+                <span class="n">name_for_data</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;gaia_field&#39;</span><span class="p">,</span>
+                <span class="n">parallax_over_error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="n">min_parallax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">max_parallax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">path_to_save_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">columns</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
+                <span class="n">additional_filters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">use_default_filters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query Gaia Data Release 3 catalog with spatial cone search and quality filters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coordinates : dict</span>
+<span class="sd">            Dictionary with &#39;ra&#39;, &#39;dec&#39; (degrees), and &#39;radius&#39; (degrees)</span>
+<span class="sd">        name_for_data : str, default=&#39;gaia_field&#39;</span>
+<span class="sd">            Name for saved file (if path_to_save_data is provided)</span>
+<span class="sd">        parallax_over_error : float, optional, default=10</span>
+<span class="sd">            Minimum parallax/error ratio. Set to None to disable.</span>
+<span class="sd">        min_parallax : float, optional</span>
+<span class="sd">            Minimum parallax (mas). Can be used alone or with max_parallax.</span>
+<span class="sd">        max_parallax : float, optional</span>
+<span class="sd">            Maximum parallax (mas). Can be used alone or with min_parallax.</span>
+<span class="sd">        path_to_save_data : str, optional</span>
+<span class="sd">            Directory to save results. If None, results are not saved to file.</span>
+<span class="sd">        columns : str, default=&#39;all&#39;</span>
+<span class="sd">            Columns to retrieve: &#39;all&#39; for all columns, &#39;default&#39; for common</span>
+<span class="sd">            astrometric/photometric columns, or a custom column string.</span>
+<span class="sd">        additional_filters : str or list of str, optional</span>
+<span class="sd">            Additional SQL filter conditions to append.</span>
+<span class="sd">        use_default_filters : bool, default=True</span>
+<span class="sd">            Whether to apply default quality filters (proper motion, RUWE, etc.)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Query results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate inputs before any side effects</span>
+        <span class="k">if</span> <span class="n">coordinates</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;coordinates dictionary with RA, Dec, and radius must be provided.&quot;</span><span class="p">)</span>
+
+        <span class="n">required_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ra&#39;</span><span class="p">,</span> <span class="s1">&#39;dec&#39;</span><span class="p">,</span> <span class="s1">&#39;radius&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="n">coordinates</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">required_keys</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;coordinates must contain: </span><span class="si">{</span><span class="n">required_keys</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Handle column selection</span>
+        <span class="k">if</span> <span class="n">columns</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
+        <span class="k">elif</span> <span class="n">columns</span> <span class="o">==</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="n">DEFAULT_COLUMNS</span>
+        <span class="c1"># else: use columns as provided</span>
+
+        <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">parallax_over_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gaia.parallax IS NOT NULL AND gaia.parallax_over_error &gt; </span><span class="si">{</span><span class="n">parallax_over_error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Flexible parallax range filtering</span>
+        <span class="k">if</span> <span class="n">min_parallax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">max_parallax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gaia.parallax BETWEEN </span><span class="si">{</span><span class="n">min_parallax</span><span class="si">}</span><span class="s2"> AND </span><span class="si">{</span><span class="n">max_parallax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">min_parallax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gaia.parallax &gt;= </span><span class="si">{</span><span class="n">min_parallax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">max_parallax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;gaia.parallax &lt;= </span><span class="si">{</span><span class="n">max_parallax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_default_filters</span><span class="p">:</span>
+            <span class="n">default_filters</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">&quot;gaia.pmra IS NOT NULL&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.pmdec IS NOT NULL&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.ruwe &lt; 1.4&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.phot_g_mean_flux_over_error &gt; 10&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.phot_rp_mean_flux_over_error &gt; 10&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.phot_bp_mean_flux_over_error &gt; 10&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.astrometric_excess_noise &lt; 1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.visibility_periods_used &gt; 6&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.phot_bp_rp_excess_factor &lt; 1.3 + 0.060*POWER(gaia.phot_bp_mean_mag - gaia.phot_rp_mean_mag, 2)&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gaia.phot_bp_rp_excess_factor &gt; 1.0 + 0.015*POWER(gaia.phot_bp_mean_mag - gaia.phot_rp_mean_mag, 2)&quot;</span>
+            <span class="p">]</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">default_filters</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">additional_filters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">additional_filters</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">additional_filters</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">additional_filters</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">filters</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">additional_filters</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;additional_filters must be a string or list of strings&quot;</span><span class="p">)</span>
+        
+        <span class="n">where_clause</span> <span class="o">=</span> <span class="s2">&quot; AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span> <span class="k">if</span> <span class="n">filters</span> <span class="k">else</span> <span class="s2">&quot;1=1&quot;</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT </span><span class="si">{</span><span class="n">columns</span><span class="si">}</span>
+<span class="s2">                FROM gaiadr3.gaia_source AS gaia</span>
+<span class="s2">                WHERE CONTAINS(POINT(&#39;ICRS&#39;, gaia.ra, gaia.dec), CIRCLE(&#39;ICRS&#39;, </span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="s1">&#39;ra&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="s1">&#39;dec&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="s1">&#39;radius&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)) = 1</span>
+<span class="s2">                AND </span><span class="si">{</span><span class="n">where_clause</span><span class="si">}</span>
+<span class="s2">                &quot;&quot;&quot;</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">Gaia</span><span class="o">.</span><span class="n">launch_job_async</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name_for_data</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+            <span class="n">df_result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">path_to_save_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path_to_save_data</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_save_data</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name_for_data</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">)</span>
+                <span class="n">df_result</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Query returned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows. Saved to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Query returned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows.&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">df_result</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gaia query failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+
+<div class="viewcode-block" id="ElisaQuery.gaia_source_id">
+<a class="viewcode-back" href="../../../api.html#elisa.query.data.ElisaQuery.gaia_source_id">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gaia_source_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">source_id</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+                    <span class="n">columns</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
+                    <span class="n">name_for_data</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;gaia_source&#39;</span><span class="p">,</span>
+                    <span class="n">path_to_save_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span>
+                    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query Gaia DR3 by source_id(s).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source_id : int or list of int or numpy array</span>
+<span class="sd">            Single source_id or list of source_ids to query</span>
+<span class="sd">        columns : str, default=&#39;all&#39;</span>
+<span class="sd">            Columns to retrieve: &#39;all&#39; for all columns, &#39;default&#39; for common</span>
+<span class="sd">            astrometric/photometric columns, or a custom column string.</span>
+<span class="sd">        name_for_data : str, default=&#39;gaia_source&#39;</span>
+<span class="sd">            Name for saved file (if path_to_save_data is provided)</span>
+<span class="sd">        path_to_save_data : str, optional</span>
+<span class="sd">            Directory to save results. If None, results are not saved to file.</span>
+<span class="sd">        chunk_size : int, default=5000</span>
+<span class="sd">            Maximum number of source_ids per query (for large lists)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Query results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source_id</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span>
+            <span class="n">source_ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">source_id</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source_id</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="n">source_ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">sid</span><span class="p">)</span> <span class="k">for</span> <span class="n">sid</span> <span class="ow">in</span> <span class="n">source_id</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">source_ids</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;source_id list cannot be empty&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;source_id must be an int, list of ints, or numpy array&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Handle column selection</span>
+        <span class="k">if</span> <span class="n">columns</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
+        <span class="k">elif</span> <span class="n">columns</span> <span class="o">==</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="n">DEFAULT_COLUMNS</span>
+        <span class="c1"># else: use columns as provided</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">source_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">chunk_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Querying </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">source_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> source_ids in chunks of </span><span class="si">{</span><span class="n">chunk_size</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_source_ids_chunked</span><span class="p">(</span>
+                                                    <span class="n">source_ids</span><span class="o">=</span><span class="n">source_ids</span><span class="p">,</span>
+                                                    <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+                                                    <span class="n">name_for_data</span><span class="o">=</span><span class="n">name_for_data</span><span class="p">,</span>
+                                                    <span class="n">path_to_save_data</span><span class="o">=</span><span class="n">path_to_save_data</span><span class="p">,</span>
+                                                    <span class="n">chunk_size</span><span class="o">=</span><span class="n">chunk_size</span>
+                                                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_source_ids_single</span><span class="p">(</span>
+                                                <span class="n">source_ids</span><span class="o">=</span><span class="n">source_ids</span><span class="p">,</span>
+                                                <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+                                                <span class="n">name_for_data</span><span class="o">=</span><span class="n">name_for_data</span><span class="p">,</span>
+                                                <span class="n">path_to_save_data</span><span class="o">=</span><span class="n">path_to_save_data</span>
+                                            <span class="p">)</span></div>
+
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_query_source_ids_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                <span class="n">source_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+                                <span class="n">columns</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                                <span class="n">name_for_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                                <span class="n">path_to_save_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute a single query for source_ids.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source_ids : list of int</span>
+<span class="sd">            List of source_ids to query</span>
+<span class="sd">        columns : str</span>
+<span class="sd">            Columns to retrieve</span>
+<span class="sd">        name_for_data : str</span>
+<span class="sd">            Name for saved file</span>
+<span class="sd">        path_to_save_data : str, optional</span>
+<span class="sd">            Directory to save results. If None, results are not saved.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Query results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">source_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">source_id_clause</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;gaia.source_id = </span><span class="si">{</span><span class="n">source_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">source_id_list</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">source_ids</span><span class="p">))</span>
+            <span class="n">source_id_clause</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; gaia.source_id IN (</span><span class="si">{</span><span class="n">source_id_list</span><span class="si">}</span><span class="s2">) &quot;</span>
+        
+        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT </span><span class="si">{</span><span class="n">columns</span><span class="si">}</span>
+<span class="s2">                FROM gaiadr3.gaia_source AS gaia</span>
+<span class="s2">                WHERE </span><span class="si">{</span><span class="n">source_id_clause</span><span class="si">}</span>
+<span class="s2">                &quot;&quot;&quot;</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">Gaia</span><span class="o">.</span><span class="n">launch_job_async</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name_for_data</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+            <span class="n">df_result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">source_ids</span><span class="p">):</span>
+                <span class="n">found_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df_result</span><span class="p">[</span><span class="s1">&#39;source_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+                <span class="n">missing_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">source_ids</span><span class="p">)</span> <span class="o">-</span> <span class="n">found_ids</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> source_id(s) not found in Gaia DR3&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;warning&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_ids</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing IDs: </span><span class="si">{</span><span class="n">missing_ids</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;warning&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">path_to_save_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path_to_save_data</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_save_data</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name_for_data</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">)</span>
+                <span class="n">df_result</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Query returned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows. Saved to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Query returned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows.&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">df_result</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gaia query failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_query_source_ids_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                <span class="n">source_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+                                <span class="n">columns</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                                <span class="n">name_for_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                                <span class="n">path_to_save_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                                <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute chunked queries for large lists of source_ids.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source_ids : list of int</span>
+<span class="sd">            List of source_ids to query</span>
+<span class="sd">        columns : str</span>
+<span class="sd">            Columns to retrieve</span>
+<span class="sd">        name_for_data : str</span>
+<span class="sd">            Name for saved file</span>
+<span class="sd">        path_to_save_data : str, optional</span>
+<span class="sd">            Directory to save results. If None, results are not saved.</span>
+<span class="sd">        chunk_size : int</span>
+<span class="sd">            Maximum number of source_ids per query</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Combined query results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">source_ids</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">source_ids</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">)]</span>
+        <span class="n">num_chunks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Splitting into </span><span class="si">{</span><span class="n">num_chunks</span><span class="si">}</span><span class="s2"> chunks...&quot;</span><span class="p">)</span>
+
+        <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Querying chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">num_chunks</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="si">}</span><span class="s2"> source_ids)...&quot;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">df_chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_source_ids_single</span><span class="p">(</span>
+                    <span class="n">source_ids</span><span class="o">=</span><span class="n">chunk</span><span class="p">,</span>
+                    <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+                    <span class="n">name_for_data</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name_for_data</span><span class="si">}</span><span class="s2">_chunk</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">path_to_save_data</span><span class="o">=</span><span class="n">path_to_save_data</span><span class="p">,</span>
+                    <span class="n">save_to_file</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Don&#39;t save chunks individually</span>
+                <span class="p">)</span>
+                <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df_chunk</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;warning&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dfs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;All chunks failed to query. No data retrieved.&quot;</span><span class="p">)</span>
+
+        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">source_ids</span><span class="p">):</span>
+            <span class="n">found_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df_result</span><span class="p">[</span><span class="s1">&#39;source_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">missing_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">source_ids</span><span class="p">)</span> <span class="o">-</span> <span class="n">found_ids</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> source_id(s) not found in Gaia DR3&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;warning&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">path_to_save_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path_to_save_data</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_save_data</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name_for_data</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">)</span>
+            <span class="n">df_result</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Combined query returned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows. Saved to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Combined query returned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df_result</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df_result</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Jeison Steven Alfonso.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

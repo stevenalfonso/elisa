@@ -1,0 +1,13 @@
+/.vscode
+.DS_Store
+/isochrone_data
+
+# Build artifacts
+*.egg-info/
+*.egg
+*.pytest_cache/
+
+# Python cache
+__pycache__/
+*.pyc
+*.npy

@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Start &mdash; ELISA 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ELISA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#step-1-download-an-isochrone-grid">Step 1: Download an Isochrone Grid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-2-load-observed-data">Step 2: Load Observed Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-3-set-up-the-posterior">Step 3: Set Up the Posterior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-4-run-mcmc">Step 4: Run MCMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-5-analyze-results">Step 5: Analyze Results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ELISA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quick Start</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/quickstart.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h1>
+<p>The ELISA workflow follows five steps:</p>
+<ol class="arabic simple">
+<li><p>Download or load an isochrone grid</p></li>
+<li><p>Load observed photometry</p></li>
+<li><p>Configure priors and build the posterior</p></li>
+<li><p>Run MCMC</p></li>
+<li><p>Analyze results</p></li>
+</ol>
+<section id="step-1-download-an-isochrone-grid">
+<h2>Step 1: Download an Isochrone Grid<a class="headerlink" href="#step-1-download-an-isochrone-grid" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">elisa</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElisaClusterInference</span>
+
+<span class="n">elisa_inference</span> <span class="o">=</span> <span class="n">ElisaClusterInference</span><span class="p">()</span>
+
+<span class="n">iso_grid</span> <span class="o">=</span> <span class="n">elisa_inference</span><span class="o">.</span><span class="n">download_isochrones</span><span class="p">(</span>
+    <span class="n">logage_range</span><span class="o">=</span><span class="p">(</span><span class="mf">7.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+    <span class="n">MH_range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span>
+    <span class="n">photsys</span><span class="o">=</span><span class="s1">&#39;gaiaEDR3&#39;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;isochrone_data&#39;</span><span class="p">,</span>
+    <span class="n">output_name</span><span class="o">=</span><span class="s1">&#39;parsec_gaia_grid&#39;</span><span class="p">,</span>
+    <span class="n">save_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>To reload a previously saved grid:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">iso_grid</span> <span class="o">=</span> <span class="n">elisa_inference</span><span class="o">.</span><span class="n">load_isochrone_grid</span><span class="p">(</span>
+    <span class="s1">&#39;isochrone_data/parsec_gaia_grid.parquet&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-load-observed-data">
+<h2>Step 2: Load Observed Data<a class="headerlink" href="#step-2-load-observed-data" title="Link to this heading"></a></h2>
+<p>ELISA provides <a class="reference internal" href="api.html#elisa.query.data.ElisaQuery" title="elisa.query.data.ElisaQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">ElisaQuery</span></code></a> to fetch photometry from
+Gaia and load cluster membership catalogs from VizieR.</p>
+<p>Available catalogs: <code class="docutils literal notranslate"><span class="pre">alfonso-2024</span></code>, <code class="docutils literal notranslate"><span class="pre">cantat-gaudin-2020</span></code>, <code class="docutils literal notranslate"><span class="pre">hunt-2023</span></code>,
+<code class="docutils literal notranslate"><span class="pre">vasiliev-2021</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">elisa.query.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElisaQuery</span>
+
+<span class="n">elisa_query</span> <span class="o">=</span> <span class="n">ElisaQuery</span><span class="p">()</span>
+
+<span class="n">df_clusters</span><span class="p">,</span> <span class="n">df_members</span> <span class="o">=</span> <span class="n">elisa_query</span><span class="o">.</span><span class="n">load_catalog</span><span class="p">(</span>
+    <span class="s1">&#39;alfonso-2024&#39;</span><span class="p">,</span> <span class="n">load_members</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">source_ids</span> <span class="o">=</span> <span class="n">df_members</span><span class="p">[</span>
+    <span class="n">df_members</span><span class="p">[</span><span class="s1">&#39;Cluster&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Melotte_22&#39;</span>
+<span class="p">][</span><span class="s1">&#39;GaiaDR3&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">elisa_query</span><span class="o">.</span><span class="n">gaia_source_id</span><span class="p">(</span><span class="n">source_id</span><span class="o">=</span><span class="n">source_ids</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Prepare the observed magnitudes and errors as NumPy arrays with shape
+<code class="docutils literal notranslate"><span class="pre">(n_stars,</span> <span class="pre">3)</span></code> for the bands <code class="docutils literal notranslate"><span class="pre">[G,</span> <span class="pre">BP,</span> <span class="pre">RP]</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+    <span class="s1">&#39;phot_g_mean_mag&#39;</span><span class="p">:</span> <span class="s1">&#39;Gmag&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;phot_bp_mean_mag&#39;</span><span class="p">:</span> <span class="s1">&#39;BPmag&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;phot_rp_mean_mag&#39;</span><span class="p">:</span> <span class="s1">&#39;RPmag&#39;</span><span class="p">,</span>
+<span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">observed_mags</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Gmag&#39;</span><span class="p">,</span> <span class="s1">&#39;BPmag&#39;</span><span class="p">,</span> <span class="s1">&#39;RPmag&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">observed_errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;parallax_error&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;parallax_error&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;parallax_error&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+<span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="step-3-set-up-the-posterior">
+<h2>Step 3: Set Up the Posterior<a class="headerlink" href="#step-3-set-up-the-posterior" title="Link to this heading"></a></h2>
+<p>Define initial parameter guesses and priors. ELISA supports two prior types:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'uniform'</span></code> with <code class="docutils literal notranslate"><span class="pre">(low,</span> <span class="pre">high)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'gaussian'</span></code> with <code class="docutils literal notranslate"><span class="pre">(mean,</span> <span class="pre">std)</span></code></p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">init_logAge</span> <span class="o">=</span> <span class="mf">8.1</span>
+<span class="n">init_MH</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">distance_pc</span> <span class="o">=</span> <span class="mf">136.0</span>
+<span class="n">init_dm</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">distance_pc</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">init_AV</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+<span class="n">posterior</span> <span class="o">=</span> <span class="n">elisa_inference</span><span class="o">.</span><span class="n">setup_logposterior</span><span class="p">(</span>
+    <span class="n">grid</span><span class="o">=</span><span class="n">iso_grid</span><span class="p">,</span>
+    <span class="n">observed_mags</span><span class="o">=</span><span class="n">observed_mags</span><span class="p">,</span>
+    <span class="n">observed_errors</span><span class="o">=</span><span class="n">observed_errors</span><span class="p">,</span>
+    <span class="n">prior_logAge</span><span class="o">=</span><span class="p">(</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">10.5</span><span class="p">),</span>
+    <span class="n">prior_MH</span><span class="o">=</span><span class="p">(</span><span class="n">init_MH</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+    <span class="n">prior_dm</span><span class="o">=</span><span class="p">(</span><span class="n">init_dm</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+    <span class="n">prior_AV</span><span class="o">=</span><span class="p">(</span><span class="n">init_AV</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+    <span class="n">prior_type</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;logAge&#39;</span><span class="p">:</span> <span class="s1">&#39;uniform&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;MH&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;dm&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;AV&#39;</span><span class="p">:</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">init_params</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">get_initial_params</span><span class="p">(</span>
+    <span class="n">logAge_init</span><span class="o">=</span><span class="n">init_logAge</span><span class="p">,</span>
+    <span class="n">MH_init</span><span class="o">=</span><span class="n">init_MH</span><span class="p">,</span>
+    <span class="n">dm_init</span><span class="o">=</span><span class="n">init_dm</span><span class="p">,</span>
+    <span class="n">AV_init</span><span class="o">=</span><span class="n">init_AV</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-4-run-mcmc">
+<h2>Step 4: Run MCMC<a class="headerlink" href="#step-4-run-mcmc" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sampler</span> <span class="o">=</span> <span class="n">elisa_inference</span><span class="o">.</span><span class="n">run_mcmc</span><span class="p">(</span>
+    <span class="n">log_posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
+    <span class="n">init_params</span><span class="o">=</span><span class="n">init_params</span><span class="p">,</span>
+    <span class="n">n_walkers</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">n_steps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+    <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">run_mcmc</span></code> also supports parallel execution with <code class="docutils literal notranslate"><span class="pre">parallel=True</span></code> and
+<code class="docutils literal notranslate"><span class="pre">n_cores=4</span></code>.</p>
+</section>
+<section id="step-5-analyze-results">
+<h2>Step 5: Analyze Results<a class="headerlink" href="#step-5-analyze-results" title="Link to this heading"></a></h2>
+<p><strong>Convergence diagnostics:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_burn</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">chains</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">(</span><span class="n">discard</span><span class="o">=</span><span class="n">n_burn</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">R_hat</span> <span class="o">=</span> <span class="n">elisa_inference</span><span class="o">.</span><span class="n">get_gelman_rubin</span><span class="p">(</span><span class="n">chains</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Autocorrelation and thinning:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tau</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_autocorr_time</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">burnin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">tau</span><span class="p">))</span>
+<span class="n">thin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">tau</span><span class="p">))</span>
+<span class="n">flat_samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">(</span><span class="n">discard</span><span class="o">=</span><span class="n">burnin</span><span class="p">,</span> <span class="n">thin</span><span class="o">=</span><span class="n">thin</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Results summary:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">elisa_inference</span><span class="o">.</span><span class="n">get_results_summary</span><span class="p">(</span><span class="n">flat_samples</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Corner plot:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">corner</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;logAge&quot;</span><span class="p">,</span> <span class="s2">&quot;[M/H]&quot;</span><span class="p">,</span> <span class="s2">&quot;dm&quot;</span><span class="p">,</span> <span class="s2">&quot;A_V&quot;</span><span class="p">]</span>
+<span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span>
+    <span class="n">flat_samples</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+    <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.84</span><span class="p">],</span> <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Isochrone fit overlay:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">elisa_inference</span><span class="o">.</span><span class="n">plot_isochrone_fit</span><span class="p">(</span>
+    <span class="n">flat_samples</span><span class="o">=</span><span class="n">flat_samples</span><span class="p">,</span>
+    <span class="n">observed_mags</span><span class="o">=</span><span class="n">observed_mags</span><span class="p">,</span>
+    <span class="n">n_draws</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Jeison Steven Alfonso.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
