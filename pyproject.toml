@@ -57,10 +57,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/steven/elisa"
-Documentation = "https://github.com/steven/elisa#readme"
-Repository = "https://github.com/steven/elisa"
-Issues = "https://github.com/steven/elisa/issues"
+Homepage = "https://github.com/stevenalfonso/elisa"
+Documentation = "https://astroelisa.readthedocs.io"
+Repository = "https://github.com/stevenalfonso/elisa"
+Issues = "https://github.com/stevenalfonso/elisa/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
