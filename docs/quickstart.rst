@@ -157,6 +157,7 @@ Define initial parameter guesses and priors. ELISA supports two prior types:
 **Output:**
 
 .. code-block:: text
+
     Building lookup structure...
     Grid loaded!
     Age range: [7.00, 10.00]
@@ -179,6 +180,7 @@ Step 4: Run MCMC
 **Output:**
 
 .. code-block:: text
+
     MCMC Setup:
     Parameters: 4 (logAge, MH, dm, AV)
     Walkers: 32
@@ -220,6 +222,7 @@ Step 5: Analyze Results
 **Output:**
 
 .. code-block:: text
+    
     ============================================================
     CLUSTER PARAMETER RESULTS
     ============================================================
