@@ -14,6 +14,7 @@ Step 1: Download an Isochrone Grid
 
 .. code-block:: python
 
+   import matplotlib.pyplot as plt
    from elisa import ElisaClusterInference
 
    elisa_inference = ElisaClusterInference()
@@ -58,11 +59,10 @@ To reload a previously saved grid:
 
 .. code-block:: python
 
-    import matplotlib.pyplot as plt
-
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
-    scatter1 = axes[0].scatter(iso_grid['G_BPmag'] - iso_grid['G_RPmag'], iso_grid['Gmag'], c=iso_grid['logAge'], cmap='viridis', s=0.5)
+    scatter1 = axes[0].scatter(iso_grid['G_BPmag'] - iso_grid['G_RPmag'], iso_grid['Gmag'], 
+                                c=iso_grid['logAge'], cmap='viridis', s=0.5)
     axes[0].set_xlabel('BP - RP (mag)')
     axes[0].set_ylabel('G (mag)')
     axes[0].set_title('Isochrones colored by log(age)')
@@ -71,7 +71,8 @@ To reload a previously saved grid:
     axes[0].set_ylim(20, -15)
     plt.colorbar(scatter1, ax=axes[0], label='log(age)')
 
-    scatter2 = axes[1].scatter(iso_grid['G_BPmag'] - iso_grid['G_RPmag'], iso_grid['Gmag'], c=iso_grid['MH'], cmap='coolwarm', s=0.5)
+    scatter2 = axes[1].scatter(iso_grid['G_BPmag'] - iso_grid['G_RPmag'], iso_grid['Gmag'], 
+                                c=iso_grid['MH'], cmap='coolwarm', s=0.5)
     axes[1].set_xlabel('BP - RP (mag)')
     axes[1].set_ylabel('G (mag)')
     axes[1].set_title('Isochrones colored by [M/H]')
@@ -84,7 +85,7 @@ To reload a previously saved grid:
     plt.show()
 
 .. figure:: _static/images/parsec_isochrones_grid.png
-   :width: 80%
+   :width: 100%
    :align: center
    :alt: Isochrone grid plot
 
@@ -161,7 +162,7 @@ Prepare the observed magnitudes and errors as NumPy arrays with shape
    plt.show()
 
 .. figure:: _static/images/pleiades_cmd.png
-   :width: 80%
+   :width: 60%
    :align: center
    :alt: Pleiades CMD
 
@@ -293,18 +294,19 @@ Step 5: Analyze Results
     plt.tight_layout()
 
 .. figure:: _static/images/chains.png
-   :width: 80%
+   :width: 100%
    :align: center
    :alt: Chains
 
-   The chains for each parameter with burn-in shaded in red and the Gelman-Rubin statistic displayed in the title.
+   The chains for each parameter with burn-in shaded in red and the Gelman-Rubin statistic.
 
 .. code-block:: python
 
     import corner
 
-    fig = corner.corner(flat_samples, labels=labels, quantiles=[0.16, 0.5, 0.84], show_titles=True, 
-                        title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 12})
+    fig = corner.corner(flat_samples, labels=labels, quantiles=[0.16, 0.5, 0.84], 
+                        show_titles=True, title_kwargs={"fontsize": 12}, 
+                        label_kwargs={"fontsize": 12})
     fig.suptitle("MCMC Posterior Distributions", fontsize=12)
     fig.set_size_inches(8, 8)
 
@@ -315,11 +317,6 @@ Step 5: Analyze Results
 
    Corner plot showing the posterior distributions and parameter correlations.
 
-.. code-block:: python
-
-   n_burn = 200
-   chains = sampler.get_chain(discard=n_burn).transpose(1, 0, 2)
-   R_hat = elisa_inference.get_gelman_rubin(chains)
 
 **Autocorrelation and thinning:**
 
@@ -335,8 +332,6 @@ Step 5: Analyze Results
 .. code-block:: python
 
    results = elisa_inference.get_results_summary(flat_samples)
-
-**Output:**
 
 .. code-block:: text
 
@@ -363,14 +358,4 @@ Step 5: Analyze Results
    corner.corner(
        flat_samples, labels=labels,
        quantiles=[0.16, 0.5, 0.84], show_titles=True,
-   )
-
-**Isochrone fit overlay:**
-
-.. code-block:: python
-
-   fig, ax = elisa_inference.plot_isochrone_fit(
-       flat_samples=flat_samples,
-       observed_mags=observed_mags,
-       n_draws=200,
    )
