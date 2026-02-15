@@ -35,6 +35,16 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
+# -- GitHub integration ------------------------------------------------------
+
+html_context = {
+    "display_github": True,
+    "github_user": "stevenalfonso", 
+    "github_repo": "elisa",
+    "github_version": "main",
+    "conf_py_path": "/docs/",
+}
+
 # -- Autodoc settings --------------------------------------------------------
 
 autodoc_member_order = "bysource"

@@ -347,15 +347,3 @@ Step 5: Analyze Results
     Distance: 129.9 pc
     Age: 91.9 Myr
     ============================================================
-
-**Corner plot:**
-
-.. code-block:: python
-
-   import corner
-
-   labels = ["logAge", "[M/H]", "dm", "A_V"]
-   corner.corner(
-       flat_samples, labels=labels,
-       quantiles=[0.16, 0.5, 0.84], show_titles=True,
-   )
