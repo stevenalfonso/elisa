@@ -27,8 +27,6 @@ Step 1: Download an Isochrone Grid
        save_file=True,
    )
 
-**Output:**
-
 .. code-block:: text
 
     Grid size: 16 ages x 15 metallicities = 240 isochrones
@@ -56,6 +54,42 @@ To reload a previously saved grid:
        'isochrone_data/parsec_gaia_grid.parquet'
    )
 
+**Visualize the Isochrone Grid**
+
+.. code-block:: python
+
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    scatter1 = axes[0].scatter(iso_grid['G_BPmag'] - iso_grid['G_RPmag'], iso_grid['Gmag'], c=iso_grid['logAge'], cmap='viridis', s=0.5)
+    axes[0].set_xlabel('BP - RP (mag)')
+    axes[0].set_ylabel('G (mag)')
+    axes[0].set_title('Isochrones colored by log(age)')
+    axes[0].invert_yaxis()
+    axes[0].set_xlim(-1, 6)
+    axes[0].set_ylim(20, -15)
+    plt.colorbar(scatter1, ax=axes[0], label='log(age)')
+
+    scatter2 = axes[1].scatter(iso_grid['G_BPmag'] - iso_grid['G_RPmag'], iso_grid['Gmag'], c=iso_grid['MH'], cmap='coolwarm', s=0.5)
+    axes[1].set_xlabel('BP - RP (mag)')
+    axes[1].set_ylabel('G (mag)')
+    axes[1].set_title('Isochrones colored by [M/H]')
+    axes[1].invert_yaxis()
+    axes[1].set_xlim(-1, 6)
+    axes[1].set_ylim(20, -15)
+    plt.colorbar(scatter2, ax=axes[1], label='[M/H]')
+
+    plt.tight_layout()
+    plt.show()
+
+.. figure:: _static/images/parsec_isochrones_grid.png
+   :width: 80%
+   :align: center
+   :alt: Isochrone grid plot
+
+   The downloaded isochrone grid showing the age-metallicity distribution.
+
 Step 2: Load Observed Data
 --------------------------
 
@@ -73,7 +107,7 @@ Available catalogs: `alfonso-2024 <https://ui.adsabs.harvard.edu/abs/2024A%26A..
    df_clusters, df_members = elisa_query.load_catalog(
        'alfonso-2024', load_members=True
    )
-
+   # Filter members of the Melotte 22 cluster and get their Gaia DR3 source IDs
    source_ids = df_members[
        df_members['Cluster'] == 'Melotte_22'
    ]['GaiaDR3'].values
@@ -113,6 +147,25 @@ Prepare the observed magnitudes and errors as NumPy arrays with shape
        df['parallax_error'].values,
        df['parallax_error'].values,
    ])
+
+   fig, ax = plt.subplots(figsize=(6, 6))
+   bp_rp = observed_mags[:, 1] - observed_mags[:, 2]
+   scatter = ax.scatter(bp_rp, observed_mags[:, 0], c='k', s=5, alpha=0.7)
+   ax.set_xlabel('BP - RP (mag)', fontsize=12)
+   ax.set_ylabel('G (mag)', fontsize=12)
+   ax.invert_yaxis()
+   ax.set_title('Observed Color-Magnitude Diagram')
+   ax.set_xlim(-0.5, 4.0)
+
+   plt.tight_layout()
+   plt.show()
+
+.. figure:: _static/images/pleiades_cmd.png
+   :width: 80%
+   :align: center
+   :alt: Pleiades CMD
+
+   The downloaded Pleiades Color-Magnitude Diagram (CMD) showing the observed photometry of cluster members.
 
 Step 3: Set Up the Posterior
 ----------------------------
@@ -154,8 +207,6 @@ Define initial parameter guesses and priors. ELISA supports two prior types:
        AV_init=init_AV,
    )
 
-**Output:**
-
 .. code-block:: text
 
     Building lookup structure...
@@ -164,6 +215,27 @@ Define initial parameter guesses and priors. ELISA supports two prior types:
     [M/H] range: [-2.19, 0.70]
     Mass range: [0.090, 20.85] M_sun
 
+**Refine initial parameters:**
+
+.. code-block:: python
+    
+    from scipy.optimize import minimize
+
+    results_mle = minimize(lambda params: -posterior(params), init_params, method='Nelder-Mead', 
+                            options={'maxiter': 10000, 'xatol': 1e-4, 'fatol': 1e-4})
+    init_params_mle = results_mle.x
+
+    for key, value in zip(['logAge', 'MH', 'dm', 'AV'], init_params_mle):
+        v = str(value) if not 'logAge' in key else str(value) + " -> " + str(round(10**value / 10**6, 1)) + " Myr"
+        print(f"{key}: {v}")
+
+.. code-block:: text
+
+    logAge: 7.96991070305036 -> 93.3 Myr
+    MH: 0.0006115302938599243
+    dm: 5.546796129708861
+    AV: 0.09032053836204017
+
 Step 4: Run MCMC
 ----------------
 
@@ -171,13 +243,11 @@ Step 4: Run MCMC
 
    sampler = elisa_inference.run_mcmc(
        log_posterior=posterior,
-       init_params=init_params,
+       init_params=init_params_mle,
        n_walkers=32,
        n_steps=2000,
        progress=True,
    )
-
-**Output:**
 
 .. code-block:: text
 
@@ -197,6 +267,53 @@ Step 5: Analyze Results
 -----------------------
 
 **Convergence diagnostics:**
+
+.. code-block:: python
+
+    n_burn = 200
+    flat_samples = sampler.get_chain(discard=n_burn, flat=True)
+
+    # Gelman-Rubin needs individual chains: (n_walkers, n_steps, n_params)
+    chains = sampler.get_chain(discard=n_burn).transpose(1, 0, 2)
+    R_hat = elisa_inference.get_gelman_rubin(chains)
+
+    fig, axes = plt.subplots(4, figsize=(10, 7), sharex=True)
+    samples = sampler.get_chain()
+    labels = ["logAge", "[M/H]", "distMod", "Av"]
+    for i in range(4):
+        ax = axes[i]
+        ax.plot(samples[:, :, i], "k", alpha=0.3)
+        ax.set_xlim(0, len(samples))
+        ax.set_ylabel(labels[i])
+        ax.yaxis.set_label_coords(-0.1, 0.5)
+        ax.axvspan(0, n_burn, alpha=0.2, color='red', label='Burn-in')
+        ax.set_title(f"$\\hat{{R}}$ = {R_hat[i]:.4f}", fontsize=10, loc='center')
+
+    axes[-1].set_xlabel("step number")
+    plt.tight_layout()
+
+.. figure:: _static/images/chains.png
+   :width: 80%
+   :align: center
+   :alt: Chains
+
+   The chains for each parameter with burn-in shaded in red and the Gelman-Rubin statistic displayed in the title.
+
+.. code-block:: python
+
+    import corner
+
+    fig = corner.corner(flat_samples, labels=labels, quantiles=[0.16, 0.5, 0.84], show_titles=True, 
+                        title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 12})
+    fig.suptitle("MCMC Posterior Distributions", fontsize=12)
+    fig.set_size_inches(8, 8)
+
+.. figure:: _static/images/corner.png
+   :width: 80%
+   :align: center
+   :alt: Corner plot
+
+   Corner plot showing the posterior distributions and parameter correlations.
 
 .. code-block:: python
 
@@ -222,7 +339,7 @@ Step 5: Analyze Results
 **Output:**
 
 .. code-block:: text
-    
+
     ============================================================
     CLUSTER PARAMETER RESULTS
     ============================================================
