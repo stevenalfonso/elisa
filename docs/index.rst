@@ -1,9 +1,14 @@
-ELISA Documentation
+.. figure:: _static/images/bird.jpeg
+   :width: 80%
+   :align: center
+   :alt: Bird
+
+ELISA
 ====================
 
 **Efficient Likelihood Inference for Stellar Ages**
 
-ELISA is a Python package for Bayesian inference of stellar cluster parameters
+``ELISA`` is a Python package for Bayesian inference of stellar cluster parameters
 using PARSEC isochrone fitting and MCMC sampling.
 
 It infers four fundamental cluster parameters from Gaia photometry:
