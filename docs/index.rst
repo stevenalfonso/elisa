@@ -1,5 +1,5 @@
 .. figure:: _static/images/bird.jpeg
-   :width: 80%
+   :width: 30%
    :align: center
    :alt: Bird
 
