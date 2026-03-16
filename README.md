@@ -4,7 +4,7 @@
 
 A Python package for Bayesian inference of stellar cluster parameters from Gaia photometry.
 
-[![Documentation](https://astroelisa.readthedocs.io/)](https://astroelisa.readthedocs.io/)
+[![Documentation](https://readthedocs.org/projects/astroelisa/badge/?version=latest)](https://astroelisa.readthedocs.io/)
 
 ## What it does
 
