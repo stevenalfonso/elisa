@@ -11,7 +11,7 @@ From Source
 
 .. code-block:: bash
 
-   git clone https://github.com/steven/elisa.git
+   git clone https://github.com/stevenalfonso/elisa.git
    cd elisa
    pip install -e .
 

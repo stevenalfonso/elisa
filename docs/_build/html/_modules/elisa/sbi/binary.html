@@ -1,0 +1,827 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elisa.sbi.binary &mdash; ELISA 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ELISA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sbi.html">Binary Star SBI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ELISA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">elisa.sbi.binary</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for elisa.sbi.binary</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">isochrones</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_ichrone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">interpolate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sbi.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">SNPE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sbi.utils.user_input_checks</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_for_sbi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+
+<div class="viewcode-block" id="build_error_splines">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.build_error_splines">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_error_splines</span><span class="p">(</span>
+    <span class="n">data_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">bands</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">UnivariateSpline</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build spline interpolations for Gaia photometric errors from observed data.</span>
+
+<span class="sd">    The CSV must contain columns ``{band}mag`` and ``e_{band}mag`` for each</span>
+<span class="sd">    band (e.g. ``Gmag``, ``e_Gmag``, ``BPmag``, ``e_BPmag``, ``RPmag``, ``e_RPmag``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data_path : str</span>
+<span class="sd">        Path to the CSV file with observed photometry.</span>
+<span class="sd">    s : float</span>
+<span class="sd">        Smoothing factor for the spline fit.</span>
+<span class="sd">    k : int</span>
+<span class="sd">        Degree of the spline.</span>
+<span class="sd">    bands : list of str, optional</span>
+<span class="sd">        Photometric bands to process.  Defaults to ``[&#39;G&#39;, &#39;BP&#39;, &#39;RP&#39;]``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Mapping from band name to a fitted ``UnivariateSpline``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">bands</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bands</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;BP&quot;</span><span class="p">,</span> <span class="s2">&quot;RP&quot;</span><span class="p">]</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Building error splines from </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> stars)&quot;</span><span class="p">)</span>
+
+    <span class="n">splines</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">UnivariateSpline</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="n">bands</span><span class="p">:</span>
+        <span class="n">mag_col</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">band</span><span class="si">}</span><span class="s2">mag&quot;</span>
+        <span class="n">err_col</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;e_</span><span class="si">{</span><span class="n">band</span><span class="si">}</span><span class="s2">mag&quot;</span>
+        <span class="n">mag</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mag_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">err_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">mag</span><span class="p">)</span>
+        <span class="n">splines</span><span class="p">[</span><span class="n">band</span><span class="p">]</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">UnivariateSpline</span><span class="p">(</span>
+            <span class="n">mag</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">],</span> <span class="n">err</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">splines</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Prior</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Main class</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ElisaBinary">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.ElisaBinary">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ElisaBinary</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simulation-Based Inference (SBI) for binary-star parameters using</span>
+<span class="sd">    Gaia photometry of star-cluster members.</span>
+
+<span class="sd">    Typical workflow::</span>
+
+<span class="sd">        elisa = ElisaBinary()</span>
+<span class="sd">        elisa.set_tracks()                        # load MIST tracks</span>
+<span class="sd">        elisa.set_error_splines(&quot;cluster.csv&quot;)    # build noise model</span>
+
+<span class="sd">        prior = StellarPrior(</span>
+<span class="sd">            M1_bounds=(0.1, 5.0),</span>
+<span class="sd">            q_bounds=(0.0, 1.0),</span>
+<span class="sd">            fixed_params={&quot;age&quot;: 0.035, &quot;feh&quot;: 0.0, &quot;distance&quot;: 400.0},</span>
+<span class="sd">        )</span>
+
+<span class="sd">        posterior, theta, x = elisa.build_posterior(</span>
+<span class="sd">            prior,</span>
+<span class="sd">            fixed_params={&quot;age&quot;: 0.035, &quot;feh&quot;: 0.0, &quot;distance&quot;: 400.0},</span>
+<span class="sd">            num_simulations=100_000,</span>
+<span class="sd">        )</span>
+<span class="sd">        elisa.save(posterior, theta, x, &quot;cluster_posterior.pkl&quot;)</span>
+
+<span class="sd">        results_df = elisa.infer(posterior, df_observed)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    params : list of str, optional</span>
+<span class="sd">        Names of the physical parameters (used for bookkeeping).</span>
+<span class="sd">        Default: ``[&quot;M1&quot;, &quot;q&quot;, &quot;age&quot;, &quot;feh&quot;, &quot;distance&quot;]``.</span>
+<span class="sd">    prior : prior object, optional</span>
+<span class="sd">        Prior to store on the instance.  Can also be passed directly</span>
+<span class="sd">        to :meth:`build_posterior`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Reasonable hard bounds for clipping posterior samples</span>
+    <span class="n">_PARAM_BOUNDS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;M1&quot;</span><span class="p">:</span>       <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span>  <span class="mf">5.0</span><span class="p">),</span>
+        <span class="s2">&quot;q&quot;</span><span class="p">:</span>        <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span>  <span class="mf">1.0</span><span class="p">),</span>
+        <span class="s2">&quot;age&quot;</span><span class="p">:</span>      <span class="p">(</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+        <span class="s2">&quot;[Fe/H]&quot;</span><span class="p">:</span>   <span class="p">(</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">5000.0</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prior</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;M1&quot;</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">,</span> <span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;feh&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior</span> <span class="o">=</span> <span class="n">prior</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracks_on</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_error_splines</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Setup</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ElisaBinary.set_tracks">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.ElisaBinary.set_tracks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_tracks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load MIST stellar evolution tracks (required before simulating).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span> <span class="o">=</span> <span class="n">get_ichrone</span><span class="p">(</span><span class="s2">&quot;mist&quot;</span><span class="p">,</span> <span class="n">tracks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracks_on</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ElisaBinary.set_error_splines">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.ElisaBinary.set_error_splines">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_error_splines</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">bands</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build photometric-error splines from observed cluster data.</span>
+
+<span class="sd">        The CSV must have columns ``{band}mag`` and ``e_{band}mag``</span>
+<span class="sd">        (e.g. ``Gmag``, ``e_Gmag``).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_path : str</span>
+<span class="sd">            Path to the CSV file.</span>
+<span class="sd">        s : float</span>
+<span class="sd">            Smoothing factor for ``UnivariateSpline``.</span>
+<span class="sd">        k : int</span>
+<span class="sd">            Spline degree.</span>
+<span class="sd">        bands : list of str, optional</span>
+<span class="sd">            Bands to process.  Default: ``[&#39;G&#39;, &#39;BP&#39;, &#39;RP&#39;]``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_error_splines</span> <span class="o">=</span> <span class="n">build_error_splines</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="n">bands</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Internal helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_errors</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bp_mag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">rp_mag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">g_mag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">parallax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample realistic Gaia photometric errors using lognormal sampling.</span>
+<span class="sd">        Requires :meth:`set_error_splines` to have been called.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_error_splines</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Error splines not set.  Call set_error_splines(data_path) first.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">sigma</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># lognormal shape parameter</span>
+        <span class="n">errors</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">band</span><span class="p">,</span> <span class="n">mag</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="n">g_mag</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;BP&quot;</span><span class="p">,</span> <span class="n">bp_mag</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;RP&quot;</span><span class="p">,</span> <span class="n">rp_mag</span><span class="p">)]:</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_error_splines</span><span class="p">[</span><span class="n">band</span><span class="p">](</span><span class="n">mag</span><span class="p">))</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">)</span>  <span class="c1"># floor at 1 mmag</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">errors</span><span class="p">[</span><span class="n">band</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">lognormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">sigma</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">parallax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plx_mode</span> <span class="o">=</span> <span class="mf">0.02</span> <span class="o">+</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="p">(</span><span class="n">g_mag</span> <span class="o">-</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span>
+            <span class="n">plx_mode</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">plx_mode</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">plx_mode</span><span class="p">)</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">errors</span><span class="p">[</span><span class="s2">&quot;parallax&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">lognormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">sigma</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">errors</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_infer_labels</span><span class="p">(</span>
+        <span class="n">fixed_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+        <span class="n">use_apparent_mags</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive the ordered list of inferred parameter names.&quot;&quot;&quot;</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;M1&quot;</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;age&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;feh&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;[Fe/H]&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_apparent_mags</span> <span class="ow">and</span> <span class="s2">&quot;distance&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;distance&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Simulator</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">binary_color_mag_isochrones</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">m1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">q</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">age</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">fe_h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">distance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">add_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate synthetic Gaia photometry for a binary-star system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        m1 : float</span>
+<span class="sd">            Primary mass in solar masses.</span>
+<span class="sd">        q : float</span>
+<span class="sd">            Mass ratio *m2/m1*, in ``[0, 1]``.</span>
+<span class="sd">        age : float</span>
+<span class="sd">            Cluster age in Gyr.</span>
+<span class="sd">        fe_h : float</span>
+<span class="sd">            Metallicity ``[Fe/H]``.</span>
+<span class="sd">        distance : float or None</span>
+<span class="sd">            Distance in pc.  When given, returns apparent magnitudes</span>
+<span class="sd">            plus parallax.  When ``None``, returns absolute magnitudes.</span>
+<span class="sd">        add_noise : bool</span>
+<span class="sd">            If ``True``, adds realistic Gaia photometric noise sampled</span>
+<span class="sd">            from the error splines.  **Critical for unbiased SBI</span>
+<span class="sd">            training** — training on noise-free data but inferring from</span>
+<span class="sd">            noisy observations leads to severe biases.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            ``[BP, RP, G, parallax]`` when *distance* is given, else</span>
+<span class="sd">            ``[BP, RP, G]`` (absolute magnitudes).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks_on</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Tracks not loaded.  Call set_tracks() first.&quot;</span><span class="p">)</span>
+
+        <span class="n">m1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">age</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">age</span><span class="p">)</span>
+        <span class="n">fe_h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fe_h</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">distance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span>
+            <span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="o">.</span><span class="n">generate_binary</span><span class="p">(</span>
+                <span class="n">m1</span><span class="p">,</span> <span class="n">q</span> <span class="o">*</span> <span class="n">m1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">age</span><span class="p">)</span> <span class="o">+</span> <span class="mi">9</span><span class="p">,</span> <span class="n">fe_h</span><span class="p">,</span>
+                <span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;BP&quot;</span><span class="p">,</span> <span class="s2">&quot;RP&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">bp</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">BP_mag</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">G_mag</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">rp</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">RP_mag</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">plx</span> <span class="o">=</span> <span class="mf">1000.0</span> <span class="o">/</span> <span class="n">distance</span>
+
+            <span class="k">if</span> <span class="n">add_noise</span><span class="p">:</span>
+                <span class="n">errs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_errors</span><span class="p">(</span><span class="n">bp</span><span class="p">,</span> <span class="n">rp</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">plx</span><span class="p">)</span>
+                <span class="n">bp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">bp</span><span class="p">,</span> <span class="n">errs</span><span class="p">[</span><span class="s2">&quot;BP&quot;</span><span class="p">])</span>
+                <span class="n">rp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">rp</span><span class="p">,</span> <span class="n">errs</span><span class="p">[</span><span class="s2">&quot;RP&quot;</span><span class="p">])</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">errs</span><span class="p">[</span><span class="s2">&quot;G&quot;</span><span class="p">])</span>
+                <span class="n">plx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">plx</span><span class="p">,</span> <span class="n">errs</span><span class="p">[</span><span class="s2">&quot;parallax&quot;</span><span class="p">])</span>
+
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">bp</span><span class="p">,</span> <span class="n">rp</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">plx</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="o">.</span><span class="n">generate_binary</span><span class="p">(</span>
+                <span class="n">m1</span><span class="p">,</span> <span class="n">q</span> <span class="o">*</span> <span class="n">m1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">age</span><span class="p">)</span> <span class="o">+</span> <span class="mi">9</span><span class="p">,</span> <span class="n">fe_h</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;BP&quot;</span><span class="p">,</span> <span class="s2">&quot;RP&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">bp</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">BP_mag</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">G_mag</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">rp</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">RP_mag</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">add_noise</span><span class="p">:</span>
+                <span class="c1"># Approximate apparent mags for error estimation (~400 pc)</span>
+                <span class="n">dm</span> <span class="o">=</span> <span class="mf">8.0</span>
+                <span class="n">errs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_errors</span><span class="p">(</span><span class="n">bp</span> <span class="o">+</span> <span class="n">dm</span><span class="p">,</span> <span class="n">rp</span> <span class="o">+</span> <span class="n">dm</span><span class="p">,</span> <span class="n">g</span> <span class="o">+</span> <span class="n">dm</span><span class="p">)</span>
+                <span class="n">bp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">bp</span><span class="p">,</span> <span class="n">errs</span><span class="p">[</span><span class="s2">&quot;BP&quot;</span><span class="p">])</span>
+                <span class="n">rp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">rp</span><span class="p">,</span> <span class="n">errs</span><span class="p">[</span><span class="s2">&quot;RP&quot;</span><span class="p">])</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">errs</span><span class="p">[</span><span class="s2">&quot;G&quot;</span><span class="p">])</span>
+
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">bp</span><span class="p">,</span> <span class="n">rp</span><span class="p">,</span> <span class="n">g</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_simulator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fixed_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+        <span class="n">use_apparent_mags</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a single-sample simulator compatible with ``sbi``.</span>
+
+<span class="sd">        The returned callable accepts a 1-D ``theta`` tensor whose</span>
+<span class="sd">        dimensions correspond to the *inferred* parameters in order:</span>
+<span class="sd">        ``M1``, ``q``, then any un-fixed subset of ``age``, ``feh``,</span>
+<span class="sd">        ``distance``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fixed_params : dict</span>
+<span class="sd">            Parameters held fixed.  Keys: ``&#39;age&#39;``, ``&#39;feh&#39;``,</span>
+<span class="sd">            ``&#39;distance&#39;``.</span>
+<span class="sd">        use_apparent_mags : bool</span>
+<span class="sd">            When ``True`` the simulator returns apparent magnitudes +</span>
+<span class="sd">            parallax; otherwise absolute magnitudes.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        callable</span>
+<span class="sd">            ``simulator(theta: 1-D tensor) -&gt; 1-D tensor``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">simulator</span><span class="p">(</span><span class="n">theta</span><span class="p">):</span>
+            <span class="n">theta_list</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="s2">&quot;tolist&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">m1</span> <span class="o">=</span> <span class="n">theta_list</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span> <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">theta_list</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span> <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="s2">&quot;age&quot;</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+                <span class="n">age</span> <span class="o">=</span> <span class="n">fixed_params</span><span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">age</span> <span class="o">=</span> <span class="n">theta_list</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span> <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="s2">&quot;feh&quot;</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+                <span class="n">fe_h</span> <span class="o">=</span> <span class="n">fixed_params</span><span class="p">[</span><span class="s2">&quot;feh&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fe_h</span> <span class="o">=</span> <span class="n">theta_list</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span> <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">use_apparent_mags</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;distance&quot;</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+                    <span class="n">distance</span> <span class="o">=</span> <span class="n">fixed_params</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">distance</span> <span class="o">=</span> <span class="n">theta_list</span><span class="p">[</span><span class="n">idx</span><span class="p">];</span> <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">distance</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">binary_color_mag_isochrones</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">fe_h</span><span class="p">,</span> <span class="n">distance</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">simulator</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Training</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_simulate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sbi_simulator</span><span class="p">,</span>
+        <span class="n">sbi_prior</span><span class="p">,</span>
+        <span class="n">num_simulations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">max_trials</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate simulations, discarding runs that produce NaN outputs.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta : torch.Tensor, shape ``(num_simulations, n_params)``</span>
+<span class="sd">        x : torch.Tensor, shape ``(num_simulations, n_obs)``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_trials</span><span class="p">,</span> <span class="n">num_simulated</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="n">theta_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">x_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">num_simulations</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Simulating&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">num_simulated</span> <span class="o">&lt;</span> <span class="n">num_simulations</span><span class="p">:</span>
+                <span class="n">N</span> <span class="o">=</span> <span class="n">num_simulations</span> <span class="o">-</span> <span class="n">num_simulated</span>
+                <span class="n">_theta</span> <span class="o">=</span> <span class="n">sbi_prior</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="n">N</span><span class="p">,))</span>
+                <span class="n">_x</span> <span class="o">=</span> <span class="n">sbi_simulator</span><span class="p">(</span><span class="n">_theta</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">_x</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="n">_x</span> <span class="o">=</span> <span class="n">_x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="n">keep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">_x</span><span class="o">.</span><span class="n">numpy</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">theta_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_theta</span><span class="p">[</span><span class="n">keep</span><span class="p">]))</span>
+                <span class="n">x_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_x</span><span class="p">[</span><span class="n">keep</span><span class="p">]))</span>
+
+                <span class="n">num_trials</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+                <span class="n">num_simulated</span> <span class="o">+=</span> <span class="n">num_valid</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">num_valid</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">num_trials</span> <span class="o">&gt;</span> <span class="n">max_trials</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Warning: exceeded max_trials (</span><span class="si">{</span><span class="n">max_trials</span><span class="si">}</span><span class="s2">) with &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num_simulated</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">num_simulations</span><span class="si">}</span><span class="s2"> valid simulations.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">theta_list</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">x_list</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ElisaBinary.build_posterior">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.ElisaBinary.build_posterior">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">prior</span><span class="p">,</span>
+        <span class="n">fixed_params</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_apparent_mags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">num_simulations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100_000</span><span class="p">,</span>
+        <span class="n">sample_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mcmc&quot;</span><span class="p">,</span>
+        <span class="n">max_trials</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the full SBI training pipeline and return a trained posterior.</span>
+
+<span class="sd">        1. Wraps the single-sample simulator with ``prepare_for_sbi``.</span>
+<span class="sd">        2. Generates *num_simulations* valid (finite) simulations.</span>
+<span class="sd">        3. Trains a Sequential Neural Posterior Estimator (SNPE).</span>
+<span class="sd">        4. Builds and returns the posterior.</span>
+
+<span class="sd">        The inferred parameter labels are stored on the instance as</span>
+<span class="sd">        ``self._last_labels`` for use by :meth:`infer`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prior : StellarPrior or compatible</span>
+<span class="sd">            Prior distribution over the inferred parameters.</span>
+<span class="sd">        fixed_params : dict, optional</span>
+<span class="sd">            Parameters to hold fixed.  Keys: ``&#39;age&#39;``, ``&#39;feh&#39;``,</span>
+<span class="sd">            ``&#39;distance&#39;``.</span>
+<span class="sd">        use_apparent_mags : bool</span>
+<span class="sd">            When ``True``, the simulator returns apparent magnitudes +</span>
+<span class="sd">            parallax (requires *distance* to be either fixed or</span>
+<span class="sd">            inferred).  When ``False``, absolute magnitudes.</span>
+<span class="sd">        num_simulations : int</span>
+<span class="sd">            Number of simulations used for training.</span>
+<span class="sd">        sample_with : str</span>
+<span class="sd">            Posterior sampling algorithm: ``&#39;mcmc&#39;`` (default) or</span>
+<span class="sd">            ``&#39;rejection&#39;``.</span>
+<span class="sd">        max_trials : float</span>
+<span class="sd">            Maximum number of simulation rounds before raising a</span>
+<span class="sd">            warning and stopping early.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        posterior : sbi posterior object</span>
+<span class="sd">        theta : torch.Tensor</span>
+<span class="sd">            Simulated parameter vectors used for training.</span>
+<span class="sd">        x : torch.Tensor</span>
+<span class="sd">            Corresponding simulated observables used for training.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fixed_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fixed_params</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infer_labels</span><span class="p">(</span><span class="n">fixed_params</span><span class="p">,</span> <span class="n">use_apparent_mags</span><span class="p">)</span>
+
+        <span class="n">simulator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_simulator</span><span class="p">(</span><span class="n">fixed_params</span><span class="p">,</span> <span class="n">use_apparent_mags</span><span class="p">)</span>
+        <span class="n">sbi_simulator</span><span class="p">,</span> <span class="n">sbi_prior</span> <span class="o">=</span> <span class="n">prepare_for_sbi</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">prior</span><span class="p">)</span>
+
+        <span class="n">inference</span> <span class="o">=</span> <span class="n">SNPE</span><span class="p">(</span><span class="n">sbi_prior</span><span class="p">)</span>
+        <span class="n">theta</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_simulate</span><span class="p">(</span><span class="n">sbi_simulator</span><span class="p">,</span> <span class="n">sbi_prior</span><span class="p">,</span> <span class="n">num_simulations</span><span class="p">,</span> <span class="n">max_trials</span><span class="p">)</span>
+
+        <span class="n">density_estimator</span> <span class="o">=</span> <span class="n">inference</span><span class="o">.</span><span class="n">append_simulations</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">inference</span><span class="o">.</span><span class="n">build_posterior</span><span class="p">(</span><span class="n">density_estimator</span><span class="p">,</span> <span class="n">sample_with</span><span class="o">=</span><span class="n">sample_with</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">x</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Inference on observations</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ElisaBinary.infer">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.ElisaBinary.infer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">posterior</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_params</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_apparent_mags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10_000</span><span class="p">,</span>
+        <span class="n">source_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run posterior inference on observed stellar photometry.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        posterior : sbi posterior</span>
+<span class="sd">            Trained posterior returned by :meth:`build_posterior`.</span>
+<span class="sd">        data : pd.DataFrame or np.ndarray</span>
+<span class="sd">            Observed photometry.  When a ``DataFrame`` is passed,</span>
+<span class="sd">            column names are auto-detected.  Accepted column names:</span>
+
+<span class="sd">            * ``BPmag`` / ``phot_bp_mean_mag``</span>
+<span class="sd">            * ``RPmag`` / ``phot_rp_mean_mag``</span>
+<span class="sd">            * ``Gmag`` / ``phot_g_mean_mag``</span>
+<span class="sd">            * ``PlxCorr`` / ``parallax`` (required when</span>
+<span class="sd">              *use_apparent_mags* is ``True``)</span>
+
+<span class="sd">            Observation order must match the simulator output:</span>
+<span class="sd">            ``[BP, RP, G]`` or ``[BP, RP, G, parallax]``.</span>
+<span class="sd">        labels : tuple of str, optional</span>
+<span class="sd">            Inferred parameter names in prior order, e.g.</span>
+<span class="sd">            ``(&quot;M1&quot;, &quot;q&quot;)`` or ``(&quot;M1&quot;, &quot;q&quot;, &quot;age&quot;, &quot;[Fe/H]&quot;)``.</span>
+<span class="sd">            Defaults to ``self._last_labels`` set by the last call to</span>
+<span class="sd">            :meth:`build_posterior`.</span>
+<span class="sd">        fixed_params : dict, optional</span>
+<span class="sd">            Fixed parameters recorded in the output for reference.</span>
+<span class="sd">        use_apparent_mags : bool</span>
+<span class="sd">            Whether the observations are apparent magnitudes + parallax.</span>
+<span class="sd">            When ``False``, apparent magnitudes are converted to</span>
+<span class="sd">            absolute using the ``PlxCorr`` column.</span>
+<span class="sd">        num_samples : int</span>
+<span class="sd">            Posterior samples drawn per star.</span>
+<span class="sd">        source_col : str, optional</span>
+<span class="sd">            DataFrame column to use as the star identifier in the</span>
+<span class="sd">            output.  Falls back to ``&#39;Source&#39;`` if present, otherwise</span>
+<span class="sd">            uses a running integer index.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            One row per star with columns</span>
+<span class="sd">            ``{param}_median``, ``{param}_err_lower``,</span>
+<span class="sd">            ``{param}_err_upper`` for each inferred parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fixed_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fixed_params</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;labels not provided and build_posterior() has not been &quot;</span>
+                    <span class="s2">&quot;called on this instance yet.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_labels</span>
+
+        <span class="c1"># --- normalise column names ---</span>
+        <span class="n">_col_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;phot_g_mean_mag&quot;</span><span class="p">:</span>  <span class="s2">&quot;Gmag&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;phot_bp_mean_mag&quot;</span><span class="p">:</span> <span class="s2">&quot;BPmag&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;phot_rp_mean_mag&quot;</span><span class="p">:</span> <span class="s2">&quot;RPmag&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;parallax&quot;</span><span class="p">:</span>         <span class="s2">&quot;PlxCorr&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;source_id&quot;</span><span class="p">:</span>        <span class="s2">&quot;Source&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_col_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_apparent_mags</span><span class="p">:</span>
+                <span class="n">obs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s2">&quot;BPmag&quot;</span><span class="p">,</span> <span class="s2">&quot;RPmag&quot;</span><span class="p">,</span> <span class="s2">&quot;Gmag&quot;</span><span class="p">,</span> <span class="s2">&quot;PlxCorr&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plx</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;PlxCorr&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">dm</span> <span class="o">=</span> <span class="mf">5.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">plx</span><span class="p">)</span> <span class="o">-</span> <span class="mf">10.0</span>
+                <span class="n">obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
+                    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;BPmag&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">dm</span><span class="p">,</span>
+                    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;RPmag&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">dm</span><span class="p">,</span>
+                    <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Gmag&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">dm</span><span class="p">,</span>
+                <span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">source_col</span> <span class="ow">and</span> <span class="n">source_col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">source_ids</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">source_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">elif</span> <span class="s2">&quot;Source&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">source_ids</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;Source&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">source_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">source_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">))</span>
+
+        <span class="c1"># --- bounds for clipping MCMC samples ---</span>
+        <span class="n">lower_bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_PARAM_BOUNDS</span><span class="p">[</span><span class="n">l</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
+        <span class="n">upper_bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_PARAM_BOUNDS</span><span class="p">[</span><span class="n">l</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
+
+        <span class="n">_label_to_col</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;M1&quot;</span><span class="p">:</span>       <span class="s2">&quot;M1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;q&quot;</span><span class="p">:</span>        <span class="s2">&quot;q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;age&quot;</span><span class="p">:</span>      <span class="s2">&quot;age&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;[Fe/H]&quot;</span><span class="p">:</span>   <span class="s2">&quot;FeH&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="s2">&quot;distance&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">num_failed</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">obs_row</span><span class="p">,</span> <span class="n">src_id</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">source_ids</span><span class="p">),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Inferring&quot;</span>
+        <span class="p">):</span>
+            <span class="n">obs_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">obs_row</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Source&quot;</span><span class="p">:</span> <span class="n">src_id</span><span class="p">}</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">samples</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,),</span> <span class="n">x</span><span class="o">=</span><span class="n">obs_tensor</span><span class="p">)</span>
+                <span class="n">samples_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper_bounds</span><span class="p">)</span>
+                <span class="n">medians</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">samples_np</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">p16</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">samples_np</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">p84</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">samples_np</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
+                    <span class="n">col</span> <span class="o">=</span> <span class="n">_label_to_col</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+                    <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">_median&quot;</span><span class="p">]</span>    <span class="o">=</span> <span class="n">medians</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">_err_lower&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">medians</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">p16</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">_err_upper&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p84</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">medians</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">num_failed</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: sampling failed for Source=</span><span class="si">{</span><span class="n">src_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+                    <span class="n">col</span> <span class="o">=</span> <span class="n">_label_to_col</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+                    <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">_median&quot;</span><span class="p">]</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                    <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">_err_lower&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                    <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">_err_upper&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;feh&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+                    <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_fixed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fixed_params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_failed</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">num_failed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span><span class="si">}</span><span class="s2"> stars failed during sampling.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Persistence</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ElisaBinary.save">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.ElisaBinary.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the trained posterior and training data to disk.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        posterior : sbi posterior</span>
+<span class="sd">        theta : torch.Tensor</span>
+<span class="sd">        x : torch.Tensor</span>
+<span class="sd">        path : str</span>
+<span class="sd">            Output file path (e.g. ``&#39;outputs/cluster_posterior.pkl&#39;``).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">((</span><span class="n">posterior</span><span class="p">,</span> <span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span> <span class="n">fp</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved posterior to </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ElisaBinary.load">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.binary.ElisaBinary.load">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load a posterior previously saved with :meth:`save`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        posterior : sbi posterior</span>
+<span class="sd">        (theta, x) : tuple of torch.Tensor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Quick-start example</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sbi.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoxUniform</span>
+
+    <span class="n">elisa</span> <span class="o">=</span> <span class="n">ElisaBinary</span><span class="p">()</span>
+    <span class="n">elisa</span><span class="o">.</span><span class="n">set_tracks</span><span class="p">()</span>
+
+    <span class="n">data_path</span> <span class="o">=</span> <span class="s2">&quot;cluster_photometry.csv&quot;</span>   <span class="c1"># must have Gmag, e_Gmag, BPmag, ...</span>
+    <span class="n">elisa</span><span class="o">.</span><span class="n">set_error_splines</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+
+    <span class="n">fixed_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">,</span> <span class="s2">&quot;feh&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="mf">400.0</span><span class="p">}</span>
+
+    <span class="c1"># Bring your own prior — here a simple uniform over (M1, q)</span>
+    <span class="n">prior</span> <span class="o">=</span> <span class="n">BoxUniform</span><span class="p">(</span>
+        <span class="n">low</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+        <span class="n">high</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span>
+    <span class="p">)</span>
+
+    <span class="n">posterior</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">elisa</span><span class="o">.</span><span class="n">build_posterior</span><span class="p">(</span>
+        <span class="n">prior</span><span class="o">=</span><span class="n">prior</span><span class="p">,</span>
+        <span class="n">fixed_params</span><span class="o">=</span><span class="n">fixed_params</span><span class="p">,</span>
+        <span class="n">use_apparent_mags</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">num_simulations</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">elisa</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;cluster_posterior.pkl&quot;</span><span class="p">)</span>
+
+    <span class="n">df_obs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">elisa</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">df_obs</span><span class="p">,</span> <span class="n">fixed_params</span><span class="o">=</span><span class="n">fixed_params</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;cluster_results.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jeison Steven Alfonso.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

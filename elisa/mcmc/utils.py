@@ -59,69 +59,6 @@ def log_likelihood(
 # Prior Functions
 # =============================================================================
 
-def log_prior_imf_chabrier(mass: float) -> float:
-    """
-    Chabrier (2003) IMF log-prior for stellar mass.
-    
-    Parameters
-    ----------
-    mass : float
-        Stellar mass in solar masses
-    
-    Returns
-    -------
-    float
-        Log-prior probability
-    """
-
-    if mass <= 0:
-        return -np.inf
-    
-    if mass <= 1.0:
-        # Log-normal for M <= 1 Msun
-        m_c = 0.079  # characteristic mass
-        sigma = 0.69
-        log_prior = -((np.log10(mass) - np.log10(m_c)) ** 2) / (2 * sigma ** 2)
-    else:
-        # Power law for M > 1 Msun
-        alpha = 2.3  # Salpeter-like slope
-        log_prior = -alpha * np.log(mass)
-    
-    return log_prior
-
-
-def log_prior_imf_chabrier_vectorized(masses: np.ndarray) -> float:
-    """
-    Vectorized Chabrier IMF log-prior for array of masses.
-    
-    Parameters
-    ----------
-    masses : np.ndarray
-        Array of stellar masses
-    
-    Returns
-    -------
-    float
-        Sum of log-prior probabilities
-    """
-    if np.any(masses <= 0):
-        return -np.inf
-    
-    log_priors = np.zeros_like(masses)
-    
-    # Low mass: log-normal
-    low_mass = masses <= 1.0
-    m_c = 0.079
-    sigma = 0.69
-    log_priors[low_mass] = -((np.log10(masses[low_mass]) - np.log10(m_c)) ** 2) / (2 * sigma ** 2)
-    
-    # High mass: power law
-    high_mass = masses > 1.0
-    alpha = 2.3
-    log_priors[high_mass] = -alpha * np.log(masses[high_mass])
-    
-    return np.sum(log_priors)
-
 
 def log_prior_gaussian(value: float, mean: float, std: float) -> float:
     """

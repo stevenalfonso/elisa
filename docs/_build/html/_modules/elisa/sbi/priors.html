@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elisa.sbi.priors &mdash; ELISA 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ELISA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sbi.html">Binary Star SBI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ELISA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">elisa.sbi.priors</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for elisa.sbi.priors</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Built-in prior distributions for binary-star SBI.</span>
+
+<span class="sd">``StellarPrior`` is one convenience option.  You are free to use any</span>
+<span class="sd">prior compatible with ``sbi`` — for example ``sbi.utils.BoxUniform`` for</span>
+<span class="sd">a simple uniform prior, or any ``torch.distributions`` object with</span>
+<span class="sd">``.sample()`` and ``.log_prob()`` methods.</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">Uniform prior (two parameters: M1, q)::</span>
+
+<span class="sd">    from sbi.utils import BoxUniform</span>
+<span class="sd">    import torch</span>
+<span class="sd">    prior = BoxUniform(</span>
+<span class="sd">        low=torch.tensor([0.1, 0.0]),</span>
+<span class="sd">        high=torch.tensor([5.0, 1.0]),</span>
+<span class="sd">    )</span>
+
+<span class="sd">Astrophysically-motivated prior::</span>
+
+<span class="sd">    from elisa.sbi.priors import StellarPrior</span>
+<span class="sd">    prior = StellarPrior(</span>
+<span class="sd">        M1_bounds=(0.1, 5.0),</span>
+<span class="sd">        q_bounds=(0.0, 1.0),</span>
+<span class="sd">        fixed_params={&quot;age&quot;: 0.035, &quot;feh&quot;: 0.0, &quot;distance&quot;: 400.0},</span>
+<span class="sd">    )</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Beta</span><span class="p">,</span> <span class="n">Independent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">AffineTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions.transformed_distribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransformedDistribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+
+<div class="viewcode-block" id="StellarPrior">
+<a class="viewcode-back" href="../../../api.html#elisa.sbi.priors.StellarPrior">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StellarPrior</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Joint prior over binary-star parameters using Beta distributions.</span>
+
+<span class="sd">    Parameters ``M1`` and ``[Fe/H]`` use Beta priors that encode</span>
+<span class="sd">    astrophysical knowledge (IMF-like shape for mass; metallicity</span>
+<span class="sd">    distribution peaked near solar).  Mass ratio ``q`` uses</span>
+<span class="sd">    ``Beta(q_alpha, q_beta)`` — uniform by default, or set</span>
+<span class="sd">    ``q_beta &gt; 1`` to favour single stars (low *q*).  ``age`` and</span>
+<span class="sd">    ``distance`` use uniform priors when not fixed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    M1_bounds : tuple</span>
+<span class="sd">        ``(low, high)`` primary-mass range in solar masses.</span>
+<span class="sd">    q_bounds : tuple</span>
+<span class="sd">        ``(low, high)`` mass-ratio range, typically ``(0.0, 1.0)``.</span>
+<span class="sd">    tau_bounds : tuple or None</span>
+<span class="sd">        Age range in Gyr.  Required when ``&#39;age&#39;`` is not in</span>
+<span class="sd">        ``fixed_params``.</span>
+<span class="sd">    fe_h_bounds : tuple or None</span>
+<span class="sd">        ``[Fe/H]`` range.  Required when ``&#39;feh&#39;`` is not in</span>
+<span class="sd">        ``fixed_params``.</span>
+<span class="sd">    distance_bounds : tuple</span>
+<span class="sd">        Distance range in pc, used when ``with_distance=True`` and</span>
+<span class="sd">        ``&#39;distance&#39;`` is not in ``fixed_params``.</span>
+<span class="sd">    M1_alpha, M1_beta : float</span>
+<span class="sd">        Beta-distribution shape parameters for *M1*.  ``Beta(1, 5)``</span>
+<span class="sd">        gives an IMF-like shape skewed towards low masses.</span>
+<span class="sd">    q_alpha, q_beta : float</span>
+<span class="sd">        Beta-distribution shape parameters for *q*.  ``Beta(1, 1)`` is</span>
+<span class="sd">        uniform; ``Beta(1, 3)`` favours single stars (mean *q* ≈ 0.25).</span>
+<span class="sd">    fe_h_alpha, fe_h_beta, fe_h_scale : float</span>
+<span class="sd">        Shape parameters for the ``[Fe/H]`` Beta prior.</span>
+<span class="sd">    with_distance : bool</span>
+<span class="sd">        Include distance as an inferred parameter.</span>
+<span class="sd">    fixed_params : dict, optional</span>
+<span class="sd">        Parameters that are held fixed (not sampled).  Keys:</span>
+<span class="sd">        ``&#39;age&#39;``, ``&#39;feh&#39;``, ``&#39;distance&#39;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">M1_bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+        <span class="n">q_bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+        <span class="n">tau_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fe_h_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">distance_bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">1000.0</span><span class="p">),</span>
+        <span class="n">M1_alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">M1_beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+        <span class="n">q_alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">q_beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">fe_h_alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">fe_h_beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">fe_h_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span>
+        <span class="n">with_distance</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">fixed_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">fixed_params</span> <span class="o">=</span> <span class="n">fixed_params</span> <span class="ow">or</span> <span class="p">{}</span>
+
+        <span class="n">lower_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">upper_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">alphas_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">betas_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">loc_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">scale_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># M1 — always inferred</span>
+        <span class="n">lower_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M1_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">upper_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M1_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">alphas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M1_alpha</span><span class="p">)</span>
+        <span class="n">betas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M1_beta</span><span class="p">)</span>
+        <span class="n">loc_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M1_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">scale_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M1_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">M1_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># q — always inferred</span>
+        <span class="n">lower_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">upper_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">alphas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_alpha</span><span class="p">)</span>
+        <span class="n">betas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_beta</span><span class="p">)</span>
+        <span class="n">loc_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">scale_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">q_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># age — only when not fixed</span>
+        <span class="k">if</span> <span class="s2">&quot;age&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tau_bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;tau_bounds must be provided when &#39;age&#39; is not fixed.&quot;</span><span class="p">)</span>
+            <span class="n">lower_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tau_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">upper_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tau_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">alphas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">betas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">loc_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tau_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">scale_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tau_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">tau_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># [Fe/H] — only when not fixed</span>
+        <span class="k">if</span> <span class="s2">&quot;feh&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fe_h_bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fe_h_bounds must be provided when &#39;feh&#39; is not fixed.&quot;</span><span class="p">)</span>
+            <span class="n">fe_h_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">fe_h_alpha</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">fe_h_alpha</span> <span class="o">+</span> <span class="n">fe_h_beta</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">lower_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fe_h_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">upper_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fe_h_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">alphas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fe_h_alpha</span><span class="p">)</span>
+            <span class="n">betas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fe_h_beta</span><span class="p">)</span>
+            <span class="n">loc_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">fe_h_mode</span> <span class="o">*</span> <span class="n">fe_h_scale</span><span class="p">)</span>
+            <span class="n">scale_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fe_h_scale</span><span class="p">)</span>
+
+        <span class="c1"># distance — only when with_distance and not fixed</span>
+        <span class="k">if</span> <span class="n">with_distance</span> <span class="ow">and</span> <span class="s2">&quot;distance&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_params</span><span class="p">:</span>
+            <span class="n">lower_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">upper_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">alphas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">betas_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">loc_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">scale_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">distance_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">lower_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">upper_bound</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">upper_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">alphas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">alphas_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">betas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">betas_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">loc</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">loc_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">scale_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">lower_bound</span><span class="o">=</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="o">=</span><span class="n">upper_bound</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="n">Independent</span><span class="p">(</span>
+            <span class="n">TransformedDistribution</span><span class="p">(</span>
+                <span class="n">Beta</span><span class="p">(</span><span class="n">alphas</span><span class="p">,</span> <span class="n">betas</span><span class="p">,</span> <span class="n">validate_args</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                <span class="n">AffineTransform</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Pre-compute mean and variance so sbi doesn&#39;t warn</span>
+        <span class="n">_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">10_000</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variance</span> <span class="o">=</span> <span class="n">_samples</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([])):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jeison Steven Alfonso.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

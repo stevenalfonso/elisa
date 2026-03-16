@@ -1,6 +1,10 @@
 /.vscode
 .DS_Store
 /isochrone_data
+/outputs
+*sbi-logs
+#docs/_build/*
+
 
 # Build artifacts
 *.egg-info/

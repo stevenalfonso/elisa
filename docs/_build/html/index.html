@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ELISA Documentation &mdash; ELISA 0.1.0 documentation</title>
+  <title>ELISA &mdash; ELISA 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -45,6 +45,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sbi.html">Binary Star SBI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 </ul>
 
@@ -62,9 +63,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">ELISA Documentation</li>
+      <li class="breadcrumb-item active">ELISA</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+              <a href="https://github.com/stevenalfonso/elisa/blob/main/docs/index.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -72,21 +73,21 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="elisa-documentation">
-<h1>ELISA Documentation<a class="headerlink" href="#elisa-documentation" title="Link to this heading"></a></h1>
+  <figure class="align-center">
+<a class="reference internal image-reference" href="_images/bird.jpeg"><img alt="Bird" src="_images/bird.jpeg" style="width: 30%;" />
+</a>
+</figure>
+<section id="elisa">
+<h1>ELISA<a class="headerlink" href="#elisa" title="Link to this heading"></a></h1>
 <p><strong>Efficient Likelihood Inference for Stellar Ages</strong></p>
-<p>ELISA is a Python package for Bayesian inference of stellar cluster parameters
-using PARSEC isochrone fitting and MCMC sampling.</p>
-<p>It infers four fundamental cluster parameters from Gaia photometry:</p>
+<p><code class="docutils literal notranslate"><span class="pre">ELISA</span></code> is a Python package for Bayesian inference of stellar cluster parameters
+from Gaia photometry. It provides two complementary inference engines:</p>
 <ul class="simple">
-<li><p><strong>logAge</strong> – Log10 of the cluster age (yr)</p></li>
-<li><p><strong>[M/H]</strong> – Metallicity</p></li>
-<li><p><strong>dm</strong> – Distance modulus (m - M)</p></li>
-<li><p><strong>A_V</strong> – V-band extinction</p></li>
+<li><p><strong>MCMC isochrone fitting</strong> — infers cluster-level parameters (age, metallicity,
+distance modulus, extinction) by fitting PARSEC isochrones with <code class="docutils literal notranslate"><span class="pre">emcee</span></code>.</p></li>
+<li><p><strong>Binary-star SBI</strong> — estimates individual star parameters (primary mass,
+mass ratio) using Simulation-Based Inference with neural posterior estimation.</p></li>
 </ul>
-<p>ELISA downloads PARSEC isochrones, builds an interpolation grid, and uses
-<code class="docutils literal notranslate"><span class="pre">emcee</span></code> to sample the posterior distribution of these parameters given
-observed magnitudes and errors.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
@@ -104,13 +105,23 @@ observed magnitudes and errors.</p>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#step-5-analyze-results">Step 5: Analyze Results</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="sbi.html">Binary Star SBI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sbi.html#workflow-overview">Workflow Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sbi.html#step-1-load-stellar-tracks">Step 1: Load Stellar Tracks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sbi.html#step-2-build-error-splines">Step 2: Build Error Splines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sbi.html#step-3-define-a-prior">Step 3: Define a Prior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sbi.html#step-4-train-the-posterior">Step 4: Train the Posterior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sbi.html#step-5-run-inference">Step 5: Run Inference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sbi.html#full-example">Full Example</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-elisa.mcmc.elisa">ElisaClusterInference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-elisa.mcmc.interpolator">IsochroneInterpolator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-elisa.mcmc.extinction">Extinction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-elisa.mcmc.posterior">Posterior</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-elisa.mcmc.utils">Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-elisa.query.data">ElisaQuery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#elisaclusterinference">ElisaClusterInference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#posterior">Posterior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#elisabinary">ElisaBinary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#stellarprior">StellarPrior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#build-error-splines">build_error_splines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#elisaquery">ElisaQuery</a></li>
 </ul>
 </li>
 </ul>
@@ -127,7 +138,7 @@ observed magnitudes and errors.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Jeison Steven Alfonso.</p>
+    <p>&#169; Copyright 2025, Jeison Steven Alfonso.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

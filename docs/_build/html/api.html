@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Quick Start" href="quickstart.html" /> 
+    <link rel="prev" title="Binary Star SBI" href="sbi.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,11 +45,11 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sbi.html">Binary Star SBI</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-elisa.mcmc.elisa">ElisaClusterInference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#elisaclusterinference">ElisaClusterInference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.elisa.ElisaClusterInference"><code class="docutils literal notranslate"><span class="pre">ElisaClusterInference</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.elisa.ElisaClusterInference.setup_logposterior"><code class="docutils literal notranslate"><span class="pre">ElisaClusterInference.setup_logposterior()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.elisa.ElisaClusterInference.download_isochrones"><code class="docutils literal notranslate"><span class="pre">ElisaClusterInference.download_isochrones()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.elisa.ElisaClusterInference.load_isochrone_grid"><code class="docutils literal notranslate"><span class="pre">ElisaClusterInference.load_isochrone_grid()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.elisa.ElisaClusterInference.run_mcmc"><code class="docutils literal notranslate"><span class="pre">ElisaClusterInference.run_mcmc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.elisa.ElisaClusterInference.get_gelman_rubin"><code class="docutils literal notranslate"><span class="pre">ElisaClusterInference.get_gelman_rubin()</span></code></a></li>
@@ -59,53 +59,36 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-elisa.mcmc.interpolator">IsochroneInterpolator</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.interpolator.IsochroneInterpolator"><code class="docutils literal notranslate"><span class="pre">IsochroneInterpolator</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_magnitudes"><code class="docutils literal notranslate"><span class="pre">IsochroneInterpolator.get_magnitudes()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_magnitudes_vectorized"><code class="docutils literal notranslate"><span class="pre">IsochroneInterpolator.get_magnitudes_vectorized()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_max_mass_at_age"><code class="docutils literal notranslate"><span class="pre">IsochroneInterpolator.get_max_mass_at_age()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_min_mass"><code class="docutils literal notranslate"><span class="pre">IsochroneInterpolator.get_min_mass()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-elisa.mcmc.extinction">Extinction</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.extinction.Extinction"><code class="docutils literal notranslate"><span class="pre">Extinction</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.extinction.Extinction.get_extinction"><code class="docutils literal notranslate"><span class="pre">Extinction.get_extinction()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.extinction.Extinction.get_reddening"><code class="docutils literal notranslate"><span class="pre">Extinction.get_reddening()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.extinction.Extinction.A_V_from_E_BP_RP"><code class="docutils literal notranslate"><span class="pre">Extinction.A_V_from_E_BP_RP()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.extinction.Extinction.apply_extinction_and_distance"><code class="docutils literal notranslate"><span class="pre">Extinction.apply_extinction_and_distance()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.extinction.distance_modulus_to_distance"><code class="docutils literal notranslate"><span class="pre">distance_modulus_to_distance()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.extinction.distance_to_distance_modulus"><code class="docutils literal notranslate"><span class="pre">distance_to_distance_modulus()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-elisa.mcmc.posterior">Posterior</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#posterior">Posterior</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.posterior.Posterior"><code class="docutils literal notranslate"><span class="pre">Posterior</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.posterior.Posterior.log_prior"><code class="docutils literal notranslate"><span class="pre">Posterior.log_prior()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.posterior.Posterior.estimate_masses"><code class="docutils literal notranslate"><span class="pre">Posterior.estimate_masses()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.posterior.Posterior.log_likelihood"><code class="docutils literal notranslate"><span class="pre">Posterior.log_likelihood()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#elisa.mcmc.posterior.Posterior.get_initial_params"><code class="docutils literal notranslate"><span class="pre">Posterior.get_initial_params()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-elisa.mcmc.utils">Utilities</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.utils.log_likelihood"><code class="docutils literal notranslate"><span class="pre">log_likelihood()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.utils.log_prior_imf_chabrier"><code class="docutils literal notranslate"><span class="pre">log_prior_imf_chabrier()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.utils.log_prior_imf_chabrier_vectorized"><code class="docutils literal notranslate"><span class="pre">log_prior_imf_chabrier_vectorized()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.utils.log_prior_gaussian"><code class="docutils literal notranslate"><span class="pre">log_prior_gaussian()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#elisa.mcmc.utils.log_prior_uniform"><code class="docutils literal notranslate"><span class="pre">log_prior_uniform()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#elisabinary">ElisaBinary</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#elisa.sbi.binary.ElisaBinary"><code class="docutils literal notranslate"><span class="pre">ElisaBinary</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.set_tracks"><code class="docutils literal notranslate"><span class="pre">ElisaBinary.set_tracks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.set_error_splines"><code class="docutils literal notranslate"><span class="pre">ElisaBinary.set_error_splines()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.build_posterior"><code class="docutils literal notranslate"><span class="pre">ElisaBinary.build_posterior()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.infer"><code class="docutils literal notranslate"><span class="pre">ElisaBinary.infer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.save"><code class="docutils literal notranslate"><span class="pre">ElisaBinary.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.load"><code class="docutils literal notranslate"><span class="pre">ElisaBinary.load()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-elisa.query.data">ElisaQuery</a><ul>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stellarprior">StellarPrior</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#elisa.sbi.priors.StellarPrior"><code class="docutils literal notranslate"><span class="pre">StellarPrior</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#build-error-splines">build_error_splines</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#elisa.sbi.binary.build_error_splines"><code class="docutils literal notranslate"><span class="pre">build_error_splines()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#elisaquery">ElisaQuery</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#elisa.query.data.ElisaQuery"><code class="docutils literal notranslate"><span class="pre">ElisaQuery</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.query.data.ElisaQuery.login"><code class="docutils literal notranslate"><span class="pre">ElisaQuery.login()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.query.data.ElisaQuery.logout"><code class="docutils literal notranslate"><span class="pre">ElisaQuery.logout()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.query.data.ElisaQuery.load_gaia_tables"><code class="docutils literal notranslate"><span class="pre">ElisaQuery.load_gaia_tables()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#elisa.query.data.ElisaQuery.load_catalog"><code class="docutils literal notranslate"><span class="pre">ElisaQuery.load_catalog()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#elisa.query.data.ElisaQuery.gaia_query"><code class="docutils literal notranslate"><span class="pre">ElisaQuery.gaia_query()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#elisa.query.data.ElisaQuery.gaia_source_id"><code class="docutils literal notranslate"><span class="pre">ElisaQuery.gaia_source_id()</span></code></a></li>
 </ul>
 </li>
@@ -131,7 +114,7 @@
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">API Reference</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+              <a href="https://github.com/stevenalfonso/elisa/blob/main/docs/api.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -141,8 +124,11 @@
              
   <section id="api-reference">
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
-<section id="module-elisa.mcmc.elisa">
-<span id="elisaclusterinference"></span><h2>ElisaClusterInference<a class="headerlink" href="#module-elisa.mcmc.elisa" title="Link to this heading"></a></h2>
+<p>This page documents the classes and functions used to run inferences and
+download data. Internal helpers and low-level utilities are omitted.</p>
+<section id="elisaclusterinference">
+<h2>ElisaClusterInference<a class="headerlink" href="#elisaclusterinference" title="Link to this heading"></a></h2>
+<p>Main class for MCMC-based cluster parameter inference.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="elisa.mcmc.elisa.ElisaClusterInference">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elisa.mcmc.elisa.</span></span><span class="sig-name descname"><span class="pre">ElisaClusterInference</span></span><a class="reference internal" href="_modules/elisa/mcmc/elisa.html#ElisaClusterInference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.elisa.ElisaClusterInference" title="Link to this definition"></a></dt>
@@ -174,26 +160,6 @@ or dict like {‘logAge’: ‘uniform’, ‘MH’: ‘gaussian’, …}</p></l
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ElisaPosterior</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.elisa.ElisaClusterInference.download_isochrones">
-<span class="sig-name descname"><span class="pre">download_isochrones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logage_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(6.0,</span> <span class="pre">10.5,</span> <span class="pre">0.05)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MH_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-2.5,</span> <span class="pre">1.0,</span> <span class="pre">0.1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photsys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaiaEDR3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./isochrone_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'parsec_gaia_grid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/elisa.html#ElisaClusterInference.download_isochrones"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.elisa.ElisaClusterInference.download_isochrones" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>logage_range</strong> (<em>tuple</em>)</p></li>
-<li><p><strong>MH_range</strong> (<em>tuple</em>)</p></li>
-<li><p><strong>photsys</strong> (<em>str</em>)</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em>)</p></li>
-<li><p><strong>output_name</strong> (<em>str</em>)</p></li>
-<li><p><strong>save_file</strong> (<em>str</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>DataFrame</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -312,247 +278,9 @@ N is the number of samples per chain, and P is the number of parameters.</p>
 </dd></dl>
 
 </section>
-<section id="module-elisa.mcmc.interpolator">
-<span id="isochroneinterpolator"></span><h2>IsochroneInterpolator<a class="headerlink" href="#module-elisa.mcmc.interpolator" title="Link to this heading"></a></h2>
-<p>Isochrone Interpolator</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="elisa.mcmc.interpolator.IsochroneInterpolator">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elisa.mcmc.interpolator.</span></span><span class="sig-name descname"><span class="pre">IsochroneInterpolator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photometry_bands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/interpolator.html#IsochroneInterpolator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.interpolator.IsochroneInterpolator" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Interpolator for PARSEC isochrones over (mass, age, metallicity).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>grid_path</strong> (<em>str</em>) – Path to the isochrone grid file (.csv or .parquet)</p></li>
-<li><p><strong>photometry_bands</strong> (<em>list</em><em>, </em><em>optional</em>) – List of photometry columns to interpolate.
-Default: [‘Gmag’, ‘G_BPmag’, ‘G_RPmag’]</p></li>
-<li><p><strong>grid</strong> (<em>DataFrame</em>)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.interpolator.IsochroneInterpolator.get_magnitudes">
-<span class="sig-name descname"><span class="pre">get_magnitudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logAge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MH</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/interpolator.html#IsochroneInterpolator.get_magnitudes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_magnitudes" title="Link to this definition"></a></dt>
-<dd><p>Get predicted absolute magnitudes for a star.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mass</strong> (<em>float</em>) – Initial stellar mass in solar masses</p></li>
-<li><p><strong>logAge</strong> (<em>float</em>) – Log10 of cluster age in years</p></li>
-<li><p><strong>MH</strong> (<em>float</em>) – Metallicity [M/H]</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Array of absolute magnitudes [G, BP, RP]</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray or None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.interpolator.IsochroneInterpolator.get_magnitudes_vectorized">
-<span class="sig-name descname"><span class="pre">get_magnitudes_vectorized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">masses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logAge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MH</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/interpolator.html#IsochroneInterpolator.get_magnitudes_vectorized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_magnitudes_vectorized" title="Link to this definition"></a></dt>
-<dd><p>Get predicted magnitudes for multiple stars at the same (age, MH).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>masses</strong> (<em>np.ndarray</em>) – Array of initial stellar masses</p></li>
-<li><p><strong>logAge</strong> (<em>float</em>) – Log10 of cluster age</p></li>
-<li><p><strong>MH</strong> (<em>float</em>) – Metallicity [M/H]</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Shape (n_stars, n_bands) array of magnitudes.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.interpolator.IsochroneInterpolator.get_max_mass_at_age">
-<span class="sig-name descname"><span class="pre">get_max_mass_at_age</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logAge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MH</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/interpolator.html#IsochroneInterpolator.get_max_mass_at_age"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_max_mass_at_age" title="Link to this definition"></a></dt>
-<dd><p>Get the maximum initial mass that exists at given age.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>logAge</strong> (<em>float</em>)</p></li>
-<li><p><strong>MH</strong> (<em>float</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.interpolator.IsochroneInterpolator.get_min_mass">
-<span class="sig-name descname"><span class="pre">get_min_mass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/interpolator.html#IsochroneInterpolator.get_min_mass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.interpolator.IsochroneInterpolator.get_min_mass" title="Link to this definition"></a></dt>
-<dd><p>Get minimum mass in the grid.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="module-elisa.mcmc.extinction">
-<span id="extinction"></span><h2>Extinction<a class="headerlink" href="#module-elisa.mcmc.extinction" title="Link to this heading"></a></h2>
-<p>Step 3: Extinction Law for Gaia Photometry</p>
-<p>Converts A_V (visual extinction) to extinction in Gaia bands (A_G, A_BP, A_RP).</p>
-<p>References:
-- Cardelli, Clayton &amp; Mathis (1989) - CCM extinction law
-- Casagrande &amp; VandenBerg (2018) - Gaia DR2 extinction coefficients
-- Gaia Collaboration (2018) - Recommended coefficients</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="elisa.mcmc.extinction.Extinction">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elisa.mcmc.extinction.</span></span><span class="sig-name descname"><span class="pre">Extinction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fixed'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/extinction.html#Extinction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.extinction.Extinction" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Extinction law for Gaia G, BP, RP bands.</p>
-<p>Provides conversion from A_V to Gaia extinctions.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>R_V</strong> (<em>float</em><em>, </em><em>optional</em>) – Total-to-selective extinction ratio. Default: 3.1</p></li>
-<li><p><strong>coefficients</strong> (<em>str</em><em>, </em><em>optional</em>) – Which coefficient set to use: ‘fixed’ or ‘color_dependent’
-Default: ‘fixed’</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.extinction.Extinction.get_extinction">
-<span class="sig-name descname"><span class="pre">get_extinction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A_V</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bp_rp_0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/extinction.html#Extinction.get_extinction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.extinction.Extinction.get_extinction" title="Link to this definition"></a></dt>
-<dd><p>Convert A_V to Gaia band extinctions.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A_V</strong> (<em>float</em>) – Visual extinction in magnitudes</p></li>
-<li><p><strong>bp_rp_0</strong> (<em>float</em><em> or </em><em>array</em><em>, </em><em>optional</em>) – Intrinsic BP-RP color (for color-dependent coefficients).
-If None, uses fixed coefficients.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>A_G, A_BP, A_RP</strong> – Extinction in each Gaia band</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>floats or arrays</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.extinction.Extinction.get_reddening">
-<span class="sig-name descname"><span class="pre">get_reddening</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A_V</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/extinction.html#Extinction.get_reddening"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.extinction.Extinction.get_reddening" title="Link to this definition"></a></dt>
-<dd><p>Get color excess E(BP-RP) from A_V.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A_V</strong> (<em>float</em>) – Visual extinction</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>E_BP_RP</strong> – Color excess E(BP-RP) = A_BP - A_RP</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.extinction.Extinction.A_V_from_E_BP_RP">
-<span class="sig-name descname"><span class="pre">A_V_from_E_BP_RP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_BP_RP</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/extinction.html#Extinction.A_V_from_E_BP_RP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.extinction.Extinction.A_V_from_E_BP_RP" title="Link to this definition"></a></dt>
-<dd><p>Convert E(BP-RP) to A_V.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>E_BP_RP</strong> (<em>float</em>) – Color excess E(BP-RP)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>A_V</strong> – Visual extinction</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.extinction.Extinction.apply_extinction_and_distance">
-<span class="sig-name descname"><span class="pre">apply_extinction_and_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">abs_mags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_modulus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A_V</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bp_rp_0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/extinction.html#Extinction.apply_extinction_and_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.extinction.Extinction.apply_extinction_and_distance" title="Link to this definition"></a></dt>
-<dd><p>Convert absolute magnitudes to apparent magnitudes.</p>
-<p>Applies distance modulus and extinction.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>abs_mags</strong> (<em>np.ndarray</em>) – Absolute magnitudes, shape (n_stars, 3) for [G, BP, RP]</p></li>
-<li><p><strong>distance_modulus</strong> (<em>float</em>) – Distance modulus (m - M) in magnitudes</p></li>
-<li><p><strong>A_V</strong> (<em>float</em>) – Visual extinction in magnitudes</p></li>
-<li><p><strong>bp_rp_0</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Intrinsic colors for color-dependent extinction</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>app_mags</strong> – Apparent magnitudes, shape (n_stars, 3)</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="elisa.mcmc.extinction.distance_modulus_to_distance">
-<span class="sig-prename descclassname"><span class="pre">elisa.mcmc.extinction.</span></span><span class="sig-name descname"><span class="pre">distance_modulus_to_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dm</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/extinction.html#distance_modulus_to_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.extinction.distance_modulus_to_distance" title="Link to this definition"></a></dt>
-<dd><p>Convert distance modulus to distance in parsecs.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dm</strong> (<em>float</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="elisa.mcmc.extinction.distance_to_distance_modulus">
-<span class="sig-prename descclassname"><span class="pre">elisa.mcmc.extinction.</span></span><span class="sig-name descname"><span class="pre">distance_to_distance_modulus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_pc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/extinction.html#distance_to_distance_modulus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.extinction.distance_to_distance_modulus" title="Link to this definition"></a></dt>
-<dd><p>Convert distance in parsecs to distance modulus.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>d_pc</strong> (<em>float</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="module-elisa.mcmc.posterior">
-<span id="posterior"></span><h2>Posterior<a class="headerlink" href="#module-elisa.mcmc.posterior" title="Link to this heading"></a></h2>
-<p>Likelihood Function for Cluster Parameter Inference</p>
-<p>Implements the Bayesian likelihood from von Hippel et al. (2006), Equation 2.</p>
-<dl class="simple">
-<dt>The likelihood compares observed photometry with model predictions:</dt><dd><dl class="simple">
-<dt>L = product over all stars and bands of:</dt><dd><p>(1 / sqrt(2*pi*sigma^2)) * exp(-(x_obs - x_pred)^2 / (2*sigma^2))</p>
-</dd>
-</dl>
-</dd>
-<dt>In log form:</dt><dd><dl class="simple">
-<dt>log(L) = sum of:</dt><dd><p>-0.5 * log(2*pi*sigma^2) - (x_obs - x_pred)^2 / (2*sigma^2)</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p>Note: This module expects apparent magnitudes as input. Users should apply
-their preferred extinction correction before passing data to this module.</p>
+<section id="posterior">
+<h2>Posterior<a class="headerlink" href="#posterior" title="Link to this heading"></a></h2>
+<p>Log-posterior callable returned by <code class="docutils literal notranslate"><span class="pre">setup_logposterior</span></code>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="elisa.mcmc.posterior.Posterior">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elisa.mcmc.posterior.</span></span><span class="sig-name descname"><span class="pre">Posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed_mags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed_errors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extinction_law</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_logAge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(9.0,</span> <span class="pre">0.5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_MH</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">0.3)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10.0,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_AV</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.1,</span> <span class="pre">0.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intrinsic_scatter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correct_extinction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/posterior.html#Posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.posterior.Posterior" title="Link to this definition"></a></dt>
@@ -567,7 +295,7 @@ the observed G magnitude and current cluster parameters.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>observed_mags</strong> (<em>np.ndarray</em>) – Observed magnitudes, shape (n_stars, 3) for [G, BP, RP]</p></li>
 <li><p><strong>observed_errors</strong> (<em>np.ndarray</em>) – Photometric errors, shape (n_stars, 3)</p></li>
-<li><p><strong>interpolator</strong> (<a class="reference internal" href="#elisa.mcmc.interpolator.IsochroneInterpolator" title="elisa.mcmc.interpolator.IsochroneInterpolator"><em>IsochroneInterpolator</em></a>) – Isochrone interpolator object</p></li>
+<li><p><strong>interpolator</strong> (<em>IsochroneInterpolator</em>) – Isochrone interpolator object</p></li>
 <li><p><strong>extinction_law</strong> (<em>GaiaExtinction</em>) – Extinction law object</p></li>
 <li><p><strong>prior_logAge</strong> (<em>tuple</em>) – (mean, std) for Gaussian prior on log(age), or (low, high) for uniform</p></li>
 <li><p><strong>prior_MH</strong> (<em>tuple</em>) – (mean, std) for Gaussian prior on [M/H]</p></li>
@@ -586,66 +314,6 @@ model imperfections, unresolved binaries, stellar rotation, activity, etc.</p></
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.posterior.Posterior.log_prior">
-<span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/posterior.html#Posterior.log_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.posterior.Posterior.log_prior" title="Link to this definition"></a></dt>
-<dd><p>Compute log-prior for cluster parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>params</strong> (<em>np.ndarray</em>) – Cluster parameter vector: [logAge, MH, dm, AV]</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Log-prior probability</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.posterior.Posterior.estimate_masses">
-<span class="sig-name descname"><span class="pre">estimate_masses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logAge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MH</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AV</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/posterior.html#Posterior.estimate_masses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.posterior.Posterior.estimate_masses" title="Link to this definition"></a></dt>
-<dd><p>Estimate stellar masses from observed magnitudes given cluster parameters.</p>
-<p>For each star, finds the mass that minimizes the chi-squared across
-all photometric bands (G, BP, RP), not just G magnitude.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>logAge</strong> (<em>float</em>) – Log10 of age in years</p></li>
-<li><p><strong>MH</strong> (<em>float</em>) – Metallicity [M/H]</p></li>
-<li><p><strong>dm</strong> (<em>float</em>) – Distance modulus</p></li>
-<li><p><strong>AV</strong> (<em>float</em>) – V-band extinction</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Estimated masses for each star</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.mcmc.posterior.Posterior.log_likelihood">
-<span class="sig-name descname"><span class="pre">log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/posterior.html#Posterior.log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.posterior.Posterior.log_likelihood" title="Link to this definition"></a></dt>
-<dd><p>Compute log-likelihood for cluster parameters.</p>
-<p>Masses are estimated internally based on the observed G magnitudes
-and the current cluster parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>params</strong> (<em>np.ndarray</em>) – Cluster parameter vector: [logAge, MH, dm, AV]</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Log-likelihood</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="elisa.mcmc.posterior.Posterior.get_initial_params">
 <span class="sig-name descname"><span class="pre">get_initial_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logAge_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MH_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dm_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AV_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/posterior.html#Posterior.get_initial_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.posterior.Posterior.get_initial_params" title="Link to this definition"></a></dt>
@@ -671,113 +339,266 @@ and the current cluster parameters.</p>
 </dd></dl>
 
 </section>
-<section id="module-elisa.mcmc.utils">
-<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-elisa.mcmc.utils" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="elisa.mcmc.utils.log_likelihood">
-<span class="sig-prename descclassname"><span class="pre">elisa.mcmc.utils.</span></span><span class="sig-name descname"><span class="pre">log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed_mags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed_errors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted_mags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intrinsic_scatter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/utils.html#log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.utils.log_likelihood" title="Link to this definition"></a></dt>
-<dd><p>Compute log-likelihood comparing observed and predicted magnitudes.</p>
-<p>Implements Equation 2 from von Hippel et al. (2006), with added
-error floor and intrinsic scatter to handle model imperfections.</p>
+<section id="elisabinary">
+<h2>ElisaBinary<a class="headerlink" href="#elisabinary" title="Link to this heading"></a></h2>
+<p>Simulation-Based Inference for binary-star parameters.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="elisa.sbi.binary.ElisaBinary">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elisa.sbi.binary.</span></span><span class="sig-name descname"><span class="pre">ElisaBinary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#ElisaBinary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.ElisaBinary" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simulation-Based Inference (SBI) for binary-star parameters using
+Gaia photometry of star-cluster members.</p>
+<p>Typical workflow:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">elisa</span> <span class="o">=</span> <span class="n">ElisaBinary</span><span class="p">()</span>
+<span class="n">elisa</span><span class="o">.</span><span class="n">set_tracks</span><span class="p">()</span>                        <span class="c1"># load MIST tracks</span>
+<span class="n">elisa</span><span class="o">.</span><span class="n">set_error_splines</span><span class="p">(</span><span class="s2">&quot;cluster.csv&quot;</span><span class="p">)</span>    <span class="c1"># build noise model</span>
+
+<span class="n">prior</span> <span class="o">=</span> <span class="n">StellarPrior</span><span class="p">(</span>
+    <span class="n">M1_bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+    <span class="n">q_bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+    <span class="n">fixed_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">,</span> <span class="s2">&quot;feh&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="mf">400.0</span><span class="p">},</span>
+<span class="p">)</span>
+
+<span class="n">posterior</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">elisa</span><span class="o">.</span><span class="n">build_posterior</span><span class="p">(</span>
+    <span class="n">prior</span><span class="p">,</span>
+    <span class="n">fixed_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">,</span> <span class="s2">&quot;feh&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">:</span> <span class="mf">400.0</span><span class="p">},</span>
+    <span class="n">num_simulations</span><span class="o">=</span><span class="mi">100_000</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">elisa</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;cluster_posterior.pkl&quot;</span><span class="p">)</span>
+
+<span class="n">results_df</span> <span class="o">=</span> <span class="n">elisa</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">df_observed</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>observed_mags</strong> (<em>np.ndarray</em>) – Observed magnitudes, shape (n_stars, n_bands)</p></li>
-<li><p><strong>observed_errors</strong> (<em>np.ndarray</em>) – Photometric errors, shape (n_stars, n_bands)</p></li>
-<li><p><strong>predicted_mags</strong> (<em>np.ndarray</em>) – Predicted magnitudes from model, shape (n_stars, n_bands)</p></li>
-<li><p><strong>error_floor</strong> (<em>float</em>) – Minimum error to prevent overly tight constraints (default: 0.02 mag)</p></li>
-<li><p><strong>intrinsic_scatter</strong> (<em>float</em>) – Additional scatter added in quadrature to account for model
-imperfections, binaries, rotation, etc. (default: 0.05 mag)</p></li>
+<li><p><strong>params</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Names of the physical parameters (used for bookkeeping).
+Default: <code class="docutils literal notranslate"><span class="pre">[&quot;M1&quot;,</span> <span class="pre">&quot;q&quot;,</span> <span class="pre">&quot;age&quot;,</span> <span class="pre">&quot;feh&quot;,</span> <span class="pre">&quot;distance&quot;]</span></code>.</p></li>
+<li><p><strong>prior</strong> (<em>prior object</em><em>, </em><em>optional</em>) – Prior to store on the instance.  Can also be passed directly
+to <a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.build_posterior" title="elisa.sbi.binary.ElisaBinary.build_posterior"><code class="xref py py-meth docutils literal notranslate"><span class="pre">build_posterior()</span></code></a>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Log-likelihood value. Returns -inf if any prediction is NaN.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="elisa.sbi.binary.ElisaBinary.set_tracks">
+<span class="sig-name descname"><span class="pre">set_tracks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#ElisaBinary.set_tracks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.ElisaBinary.set_tracks" title="Link to this definition"></a></dt>
+<dd><p>Load MIST stellar evolution tracks (required before simulating).</p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="elisa.mcmc.utils.log_prior_imf_chabrier">
-<span class="sig-prename descclassname"><span class="pre">elisa.mcmc.utils.</span></span><span class="sig-name descname"><span class="pre">log_prior_imf_chabrier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/utils.html#log_prior_imf_chabrier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.utils.log_prior_imf_chabrier" title="Link to this definition"></a></dt>
-<dd><p>Chabrier (2003) IMF log-prior for stellar mass.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mass</strong> (<em>float</em>) – Stellar mass in solar masses</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Log-prior probability</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="elisa.mcmc.utils.log_prior_imf_chabrier_vectorized">
-<span class="sig-prename descclassname"><span class="pre">elisa.mcmc.utils.</span></span><span class="sig-name descname"><span class="pre">log_prior_imf_chabrier_vectorized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">masses</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/utils.html#log_prior_imf_chabrier_vectorized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.utils.log_prior_imf_chabrier_vectorized" title="Link to this definition"></a></dt>
-<dd><p>Vectorized Chabrier IMF log-prior for array of masses.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>masses</strong> (<em>np.ndarray</em>) – Array of stellar masses</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Sum of log-prior probabilities</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="elisa.mcmc.utils.log_prior_gaussian">
-<span class="sig-prename descclassname"><span class="pre">elisa.mcmc.utils.</span></span><span class="sig-name descname"><span class="pre">log_prior_gaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/utils.html#log_prior_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.utils.log_prior_gaussian" title="Link to this definition"></a></dt>
-<dd><p>Gaussian log-prior.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="elisa.sbi.binary.ElisaBinary.set_error_splines">
+<span class="sig-name descname"><span class="pre">set_error_splines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#ElisaBinary.set_error_splines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.ElisaBinary.set_error_splines" title="Link to this definition"></a></dt>
+<dd><p>Build photometric-error splines from observed cluster data.</p>
+<p>The CSV must have columns <code class="docutils literal notranslate"><span class="pre">{band}mag</span></code> and <code class="docutils literal notranslate"><span class="pre">e_{band}mag</span></code>
+(e.g. <code class="docutils literal notranslate"><span class="pre">Gmag</span></code>, <code class="docutils literal notranslate"><span class="pre">e_Gmag</span></code>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>value</strong> (<em>float</em>) – Parameter value</p></li>
-<li><p><strong>mean</strong> (<em>float</em>) – Prior mean</p></li>
-<li><p><strong>std</strong> (<em>float</em>) – Prior standard deviation</p></li>
+<li><p><strong>data_path</strong> (<em>str</em>) – Path to the CSV file.</p></li>
+<li><p><strong>s</strong> (<em>float</em>) – Smoothing factor for <code class="docutils literal notranslate"><span class="pre">UnivariateSpline</span></code>.</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – Spline degree.</p></li>
+<li><p><strong>bands</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Bands to process.  Default: <code class="docutils literal notranslate"><span class="pre">['G',</span> <span class="pre">'BP',</span> <span class="pre">'RP']</span></code>.</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Log-prior probability</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="elisa.mcmc.utils.log_prior_uniform">
-<span class="sig-prename descclassname"><span class="pre">elisa.mcmc.utils.</span></span><span class="sig-name descname"><span class="pre">log_prior_uniform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/mcmc/utils.html#log_prior_uniform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.mcmc.utils.log_prior_uniform" title="Link to this definition"></a></dt>
-<dd><p>Uniform log-prior.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="elisa.sbi.binary.ElisaBinary.build_posterior">
+<span class="sig-name descname"><span class="pre">build_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_apparent_mags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_simulations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_with</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mcmc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#ElisaBinary.build_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.ElisaBinary.build_posterior" title="Link to this definition"></a></dt>
+<dd><p>Run the full SBI training pipeline and return a trained posterior.</p>
+<ol class="arabic simple">
+<li><p>Wraps the single-sample simulator with <code class="docutils literal notranslate"><span class="pre">prepare_for_sbi</span></code>.</p></li>
+<li><p>Generates <em>num_simulations</em> valid (finite) simulations.</p></li>
+<li><p>Trains a Sequential Neural Posterior Estimator (SNPE).</p></li>
+<li><p>Builds and returns the posterior.</p></li>
+</ol>
+<p>The inferred parameter labels are stored on the instance as
+<code class="docutils literal notranslate"><span class="pre">self._last_labels</span></code> for use by <a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.infer" title="elisa.sbi.binary.ElisaBinary.infer"><code class="xref py py-meth docutils literal notranslate"><span class="pre">infer()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>value</strong> (<em>float</em>) – Parameter value</p></li>
-<li><p><strong>low</strong> (<em>float</em>) – Lower bound</p></li>
-<li><p><strong>high</strong> (<em>float</em>) – Upper bound</p></li>
+<li><p><strong>prior</strong> (<a class="reference internal" href="#elisa.sbi.priors.StellarPrior" title="elisa.sbi.priors.StellarPrior"><em>StellarPrior</em></a><em> or </em><em>compatible</em>) – Prior distribution over the inferred parameters.</p></li>
+<li><p><strong>fixed_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – Parameters to hold fixed.  Keys: <code class="docutils literal notranslate"><span class="pre">'age'</span></code>, <code class="docutils literal notranslate"><span class="pre">'feh'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'distance'</span></code>.</p></li>
+<li><p><strong>use_apparent_mags</strong> (<em>bool</em>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, the simulator returns apparent magnitudes +
+parallax (requires <em>distance</em> to be either fixed or
+inferred).  When <code class="docutils literal notranslate"><span class="pre">False</span></code>, absolute magnitudes.</p></li>
+<li><p><strong>num_simulations</strong> (<em>int</em>) – Number of simulations used for training.</p></li>
+<li><p><strong>sample_with</strong> (<em>str</em>) – Posterior sampling algorithm: <code class="docutils literal notranslate"><span class="pre">'mcmc'</span></code> (default) or
+<code class="docutils literal notranslate"><span class="pre">'rejection'</span></code>.</p></li>
+<li><p><strong>max_trials</strong> (<em>float</em>) – Maximum number of simulation rounds before raising a
+warning and stopping early.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Log-prior probability (0 if in bounds, -inf otherwise)</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>posterior</strong> (<em>sbi posterior object</em>)</p></li>
+<li><p><strong>theta</strong> (<em>torch.Tensor</em>) – Simulated parameter vectors used for training.</p></li>
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – Corresponding simulated observables used for training.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elisa.sbi.binary.ElisaBinary.infer">
+<span class="sig-name descname"><span class="pre">infer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_apparent_mags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#ElisaBinary.infer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.ElisaBinary.infer" title="Link to this definition"></a></dt>
+<dd><p>Run posterior inference on observed stellar photometry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<em>sbi posterior</em>) – Trained posterior returned by <a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.build_posterior" title="elisa.sbi.binary.ElisaBinary.build_posterior"><code class="xref py py-meth docutils literal notranslate"><span class="pre">build_posterior()</span></code></a>.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em><em> or </em><em>np.ndarray</em>) – <p>Observed photometry.  When a <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> is passed,
+column names are auto-detected.  Accepted column names:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">BPmag</span></code> / <code class="docutils literal notranslate"><span class="pre">phot_bp_mean_mag</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RPmag</span></code> / <code class="docutils literal notranslate"><span class="pre">phot_rp_mean_mag</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Gmag</span></code> / <code class="docutils literal notranslate"><span class="pre">phot_g_mean_mag</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PlxCorr</span></code> / <code class="docutils literal notranslate"><span class="pre">parallax</span></code> (required when
+<em>use_apparent_mags</em> is <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+</ul>
+<p>Observation order must match the simulator output:
+<code class="docutils literal notranslate"><span class="pre">[BP,</span> <span class="pre">RP,</span> <span class="pre">G]</span></code> or <code class="docutils literal notranslate"><span class="pre">[BP,</span> <span class="pre">RP,</span> <span class="pre">G,</span> <span class="pre">parallax]</span></code>.</p>
+</p></li>
+<li><p><strong>labels</strong> (<em>tuple</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Inferred parameter names in prior order, e.g.
+<code class="docutils literal notranslate"><span class="pre">(&quot;M1&quot;,</span> <span class="pre">&quot;q&quot;)</span></code> or <code class="docutils literal notranslate"><span class="pre">(&quot;M1&quot;,</span> <span class="pre">&quot;q&quot;,</span> <span class="pre">&quot;age&quot;,</span> <span class="pre">&quot;[Fe/H]&quot;)</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">self._last_labels</span></code> set by the last call to
+<a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.build_posterior" title="elisa.sbi.binary.ElisaBinary.build_posterior"><code class="xref py py-meth docutils literal notranslate"><span class="pre">build_posterior()</span></code></a>.</p></li>
+<li><p><strong>fixed_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – Fixed parameters recorded in the output for reference.</p></li>
+<li><p><strong>use_apparent_mags</strong> (<em>bool</em>) – Whether the observations are apparent magnitudes + parallax.
+When <code class="docutils literal notranslate"><span class="pre">False</span></code>, apparent magnitudes are converted to
+absolute using the <code class="docutils literal notranslate"><span class="pre">PlxCorr</span></code> column.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – Posterior samples drawn per star.</p></li>
+<li><p><strong>source_col</strong> (<em>str</em><em>, </em><em>optional</em>) – DataFrame column to use as the star identifier in the
+output.  Falls back to <code class="docutils literal notranslate"><span class="pre">'Source'</span></code> if present, otherwise
+uses a running integer index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One row per star with columns
+<code class="docutils literal notranslate"><span class="pre">{param}_median</span></code>, <code class="docutils literal notranslate"><span class="pre">{param}_err_lower</span></code>,
+<code class="docutils literal notranslate"><span class="pre">{param}_err_upper</span></code> for each inferred parameter.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elisa.sbi.binary.ElisaBinary.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#ElisaBinary.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.ElisaBinary.save" title="Link to this definition"></a></dt>
+<dd><p>Save the trained posterior and training data to disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<em>sbi posterior</em>)</p></li>
+<li><p><strong>theta</strong> (<em>torch.Tensor</em>)</p></li>
+<li><p><strong>x</strong> (<em>torch.Tensor</em>)</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – Output file path (e.g. <code class="docutils literal notranslate"><span class="pre">'outputs/cluster_posterior.pkl'</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elisa.sbi.binary.ElisaBinary.load">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#ElisaBinary.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.ElisaBinary.load" title="Link to this definition"></a></dt>
+<dd><p>Load a posterior previously saved with <a class="reference internal" href="#elisa.sbi.binary.ElisaBinary.save" title="elisa.sbi.binary.ElisaBinary.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>posterior</strong> (<em>sbi posterior</em>)</p></li>
+<li><p><strong>(theta, x)</strong> (<em>tuple of torch.Tensor</em>)</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>path</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="stellarprior">
+<h2>StellarPrior<a class="headerlink" href="#stellarprior" title="Link to this heading"></a></h2>
+<p>Astrophysically-motivated prior for binary-star SBI.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="elisa.sbi.priors.StellarPrior">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elisa.sbi.priors.</span></span><span class="sig-name descname"><span class="pre">StellarPrior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M1_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.3,</span> <span class="pre">5.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe_h_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(100.0,</span> <span class="pre">1000.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M1_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M1_beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe_h_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe_h_beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe_h_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/priors.html#StellarPrior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.priors.StellarPrior" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Joint prior over binary-star parameters using Beta distributions.</p>
+<p>Parameters <code class="docutils literal notranslate"><span class="pre">M1</span></code> and <code class="docutils literal notranslate"><span class="pre">[Fe/H]</span></code> use Beta priors that encode
+astrophysical knowledge (IMF-like shape for mass; metallicity
+distribution peaked near solar).  Mass ratio <code class="docutils literal notranslate"><span class="pre">q</span></code> uses
+<code class="docutils literal notranslate"><span class="pre">Beta(q_alpha,</span> <span class="pre">q_beta)</span></code> — uniform by default, or set
+<code class="docutils literal notranslate"><span class="pre">q_beta</span> <span class="pre">&gt;</span> <span class="pre">1</span></code> to favour single stars (low <em>q</em>).  <code class="docutils literal notranslate"><span class="pre">age</span></code> and
+<code class="docutils literal notranslate"><span class="pre">distance</span></code> use uniform priors when not fixed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M1_bounds</strong> (<em>tuple</em>) – <code class="docutils literal notranslate"><span class="pre">(low,</span> <span class="pre">high)</span></code> primary-mass range in solar masses.</p></li>
+<li><p><strong>q_bounds</strong> (<em>tuple</em>) – <code class="docutils literal notranslate"><span class="pre">(low,</span> <span class="pre">high)</span></code> mass-ratio range, typically <code class="docutils literal notranslate"><span class="pre">(0.0,</span> <span class="pre">1.0)</span></code>.</p></li>
+<li><p><strong>tau_bounds</strong> (<em>tuple</em><em> or </em><em>None</em>) – Age range in Gyr.  Required when <code class="docutils literal notranslate"><span class="pre">'age'</span></code> is not in
+<code class="docutils literal notranslate"><span class="pre">fixed_params</span></code>.</p></li>
+<li><p><strong>fe_h_bounds</strong> (<em>tuple</em><em> or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">[Fe/H]</span></code> range.  Required when <code class="docutils literal notranslate"><span class="pre">'feh'</span></code> is not in
+<code class="docutils literal notranslate"><span class="pre">fixed_params</span></code>.</p></li>
+<li><p><strong>distance_bounds</strong> (<em>tuple</em>) – Distance range in pc, used when <code class="docutils literal notranslate"><span class="pre">with_distance=True</span></code> and
+<code class="docutils literal notranslate"><span class="pre">'distance'</span></code> is not in <code class="docutils literal notranslate"><span class="pre">fixed_params</span></code>.</p></li>
+<li><p><strong>M1_alpha</strong> (<em>float</em>) – Beta-distribution shape parameters for <em>M1</em>.  <code class="docutils literal notranslate"><span class="pre">Beta(1,</span> <span class="pre">5)</span></code>
+gives an IMF-like shape skewed towards low masses.</p></li>
+<li><p><strong>M1_beta</strong> (<em>float</em>) – Beta-distribution shape parameters for <em>M1</em>.  <code class="docutils literal notranslate"><span class="pre">Beta(1,</span> <span class="pre">5)</span></code>
+gives an IMF-like shape skewed towards low masses.</p></li>
+<li><p><strong>q_alpha</strong> (<em>float</em>) – Beta-distribution shape parameters for <em>q</em>.  <code class="docutils literal notranslate"><span class="pre">Beta(1,</span> <span class="pre">1)</span></code> is
+uniform; <code class="docutils literal notranslate"><span class="pre">Beta(1,</span> <span class="pre">3)</span></code> favours single stars (mean <em>q</em> ≈ 0.25).</p></li>
+<li><p><strong>q_beta</strong> (<em>float</em>) – Beta-distribution shape parameters for <em>q</em>.  <code class="docutils literal notranslate"><span class="pre">Beta(1,</span> <span class="pre">1)</span></code> is
+uniform; <code class="docutils literal notranslate"><span class="pre">Beta(1,</span> <span class="pre">3)</span></code> favours single stars (mean <em>q</em> ≈ 0.25).</p></li>
+<li><p><strong>fe_h_alpha</strong> (<em>float</em>) – Shape parameters for the <code class="docutils literal notranslate"><span class="pre">[Fe/H]</span></code> Beta prior.</p></li>
+<li><p><strong>fe_h_beta</strong> (<em>float</em>) – Shape parameters for the <code class="docutils literal notranslate"><span class="pre">[Fe/H]</span></code> Beta prior.</p></li>
+<li><p><strong>fe_h_scale</strong> (<em>float</em>) – Shape parameters for the <code class="docutils literal notranslate"><span class="pre">[Fe/H]</span></code> Beta prior.</p></li>
+<li><p><strong>with_distance</strong> (<em>bool</em>) – Include distance as an inferred parameter.</p></li>
+<li><p><strong>fixed_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – Parameters that are held fixed (not sampled).  Keys:
+<code class="docutils literal notranslate"><span class="pre">'age'</span></code>, <code class="docutils literal notranslate"><span class="pre">'feh'</span></code>, <code class="docutils literal notranslate"><span class="pre">'distance'</span></code>.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 </section>
-<section id="module-elisa.query.data">
-<span id="elisaquery"></span><h2>ElisaQuery<a class="headerlink" href="#module-elisa.query.data" title="Link to this heading"></a></h2>
+<section id="build-error-splines">
+<h2>build_error_splines<a class="headerlink" href="#build-error-splines" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="elisa.sbi.binary.build_error_splines">
+<span class="sig-prename descclassname"><span class="pre">elisa.sbi.binary.</span></span><span class="sig-name descname"><span class="pre">build_error_splines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/sbi/binary.html#build_error_splines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.sbi.binary.build_error_splines" title="Link to this definition"></a></dt>
+<dd><p>Build spline interpolations for Gaia photometric errors from observed data.</p>
+<p>The CSV must contain columns <code class="docutils literal notranslate"><span class="pre">{band}mag</span></code> and <code class="docutils literal notranslate"><span class="pre">e_{band}mag</span></code> for each
+band (e.g. <code class="docutils literal notranslate"><span class="pre">Gmag</span></code>, <code class="docutils literal notranslate"><span class="pre">e_Gmag</span></code>, <code class="docutils literal notranslate"><span class="pre">BPmag</span></code>, <code class="docutils literal notranslate"><span class="pre">e_BPmag</span></code>, <code class="docutils literal notranslate"><span class="pre">RPmag</span></code>, <code class="docutils literal notranslate"><span class="pre">e_RPmag</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_path</strong> (<em>str</em>) – Path to the CSV file with observed photometry.</p></li>
+<li><p><strong>s</strong> (<em>float</em>) – Smoothing factor for the spline fit.</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – Degree of the spline.</p></li>
+<li><p><strong>bands</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Photometric bands to process.  Defaults to <code class="docutils literal notranslate"><span class="pre">['G',</span> <span class="pre">'BP',</span> <span class="pre">'RP']</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping from band name to a fitted <code class="docutils literal notranslate"><span class="pre">UnivariateSpline</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="elisaquery">
+<h2>ElisaQuery<a class="headerlink" href="#elisaquery" title="Link to this heading"></a></h2>
+<p>Download cluster catalogs and query Gaia photometry.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="elisa.query.data.ElisaQuery">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elisa.query.data.</span></span><span class="sig-name descname"><span class="pre">ElisaQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vizier_server</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'harvard'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/query/data.html#ElisaQuery"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.query.data.ElisaQuery" title="Link to this definition"></a></dt>
@@ -790,51 +611,6 @@ imperfections, binaries, rotation, etc. (default: 0.05 mag)</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.query.data.ElisaQuery.login">
-<span class="sig-name descname"><span class="pre">login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_credentials_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_credentials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/query/data.html#ElisaQuery.login"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.query.data.ElisaQuery.login" title="Link to this definition"></a></dt>
-<dd><p>Log in to Gaia archive.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>path_to_credentials_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to credentials file</p></li>
-<li><p><strong>user_credentials</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary with ‘username’ and ‘password’ keys</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.query.data.ElisaQuery.logout">
-<span class="sig-name descname"><span class="pre">logout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/query/data.html#ElisaQuery.logout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.query.data.ElisaQuery.logout" title="Link to this definition"></a></dt>
-<dd><p>Log out from Gaia archive.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.query.data.ElisaQuery.load_gaia_tables">
-<span class="sig-name descname"><span class="pre">load_gaia_tables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_shared</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/query/data.html#ElisaQuery.load_gaia_tables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.query.data.ElisaQuery.load_gaia_tables" title="Link to this definition"></a></dt>
-<dd><p>Load and display available Gaia tables.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>include_shared</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to include shared tables (requires login)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of available table names</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list of str</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="elisa.query.data.ElisaQuery.load_catalog">
 <span class="sig-name descname"><span class="pre">load_catalog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">catalog_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'alfonso-2024'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_members</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/query/data.html#ElisaQuery.load_catalog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.query.data.ElisaQuery.load_catalog" title="Link to this definition"></a></dt>
@@ -852,34 +628,6 @@ imperfections, binaries, rotation, etc. (default: 0.05 mag)</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple of pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="elisa.query.data.ElisaQuery.gaia_query">
-<span class="sig-name descname"><span class="pre">gaia_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_for_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaia_field'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallax_over_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_parallax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_parallax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_to_save_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_filters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_default_filters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/elisa/query/data.html#ElisaQuery.gaia_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#elisa.query.data.ElisaQuery.gaia_query" title="Link to this definition"></a></dt>
-<dd><p>Query Gaia Data Release 3 catalog with spatial cone search and quality filters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>coordinates</strong> (<em>dict</em>) – Dictionary with ‘ra’, ‘dec’ (degrees), and ‘radius’ (degrees)</p></li>
-<li><p><strong>name_for_data</strong> (<em>str</em><em>, </em><em>default='gaia_field'</em>) – Name for saved file (if path_to_save_data is provided)</p></li>
-<li><p><strong>parallax_over_error</strong> (<em>float</em><em>, </em><em>optional</em><em>, </em><em>default=10</em>) – Minimum parallax/error ratio. Set to None to disable.</p></li>
-<li><p><strong>min_parallax</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum parallax (mas). Can be used alone or with max_parallax.</p></li>
-<li><p><strong>max_parallax</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum parallax (mas). Can be used alone or with min_parallax.</p></li>
-<li><p><strong>path_to_save_data</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory to save results. If None, results are not saved to file.</p></li>
-<li><p><strong>columns</strong> (<em>str</em><em>, </em><em>default='all'</em>) – Columns to retrieve: ‘all’ for all columns, ‘default’ for common
-astrometric/photometric columns, or a custom column string.</p></li>
-<li><p><strong>additional_filters</strong> (<em>str</em><em> or </em><em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Additional SQL filter conditions to append.</p></li>
-<li><p><strong>use_default_filters</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to apply default quality filters (proper motion, RUWE, etc.)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Query results</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
@@ -917,13 +665,13 @@ astrometric/photometric columns, or a custom column string.</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sbi.html" class="btn btn-neutral float-left" title="Binary Star SBI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Jeison Steven Alfonso.</p>
+    <p>&#169; Copyright 2025, Jeison Steven Alfonso.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
